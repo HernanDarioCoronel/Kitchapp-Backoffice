@@ -1,4 +1,4 @@
-# package.json
+# kitchapp-backend
 
 An Electron application with React and TypeScript
 
