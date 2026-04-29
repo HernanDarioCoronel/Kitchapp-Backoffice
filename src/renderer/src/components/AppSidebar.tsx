@@ -56,7 +56,7 @@ function AppSidebar(): JSX.Element {
                   >
                     <Link
                       to={item.url}
-                      className={`flex items-center w-full h-full m-0 
+                      className={`flex items-center w-full h-full m-0 gap-0!
                         ${
                           isClosed
                             ? isActive
