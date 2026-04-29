@@ -21,6 +21,7 @@ import {
   SidebarRail,
   SidebarTrigger
 } from '@/components/ui/sidebar'
+import { useAuth } from '@renderer/pages/login/hooks/useAuth'
 
 const navData = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboardIcon },
@@ -34,6 +35,8 @@ const navData = [
 function AppSidebar(): JSX.Element {
   const [isClosed, setIsClosed] = useState<boolean>(false)
   const location = useLocation()
+  const { logout } = useAuth()
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="flex flex-row items-center">
@@ -103,10 +106,12 @@ function AppSidebar(): JSX.Element {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="pb-4">
-        <SidebarMenuButton asChild>
+        <SidebarMenuButton asChild onClick={logout}>
           <Link to={'/logout'} className="flex items-start w-full h-full">
             <div
-              className={'flex items-center justify-center h-full transition-colors text-muted-foreground'}
+              className={
+                'flex items-center justify-center h-full transition-colors text-muted-foreground'
+              }
             >
               <LogOut />
             </div>
