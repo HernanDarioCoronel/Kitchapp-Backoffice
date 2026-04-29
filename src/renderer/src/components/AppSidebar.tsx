@@ -4,10 +4,11 @@ import {
   ChefHat,
   HandPlatter,
   LayoutDashboardIcon,
+  LogOut,
   Utensils
 } from 'lucide-react'
-import { JSX } from 'react'
-import { Link, useLocation } from 'react-router'
+import { JSX, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -16,13 +17,14 @@ import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  SidebarFooter
+  SidebarFooter,
+  SidebarRail,
+  SidebarTrigger
 } from '@/components/ui/sidebar'
-import { Button } from './ui/button'
 
 const navData = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboardIcon },
-  { title: 'Dishes', url: '/dishes', icon: Utensils }, // Ejemplo con Tabler
+  { title: 'Dishes', url: '/dishes', icon: Utensils },
   { title: 'Products', url: '/products', icon: BottleWine },
   { title: 'Orders', url: '/orders', icon: HandPlatter },
   { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
@@ -30,39 +32,56 @@ const navData = [
 ]
 
 function AppSidebar(): JSX.Element {
+  const [isClosed, setIsClosed] = useState<boolean>(false)
   const location = useLocation()
   return (
-    <Sidebar>
-      <SidebarHeader>Kitchapp</SidebarHeader>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="flex flex-row items-center">
+        <h1 className="text-xl font-bold group-data-[collapsible=icon]:hidden">Kitchapp</h1>
+        <div className="flex w-full justify-end">
+          <SidebarTrigger onClick={() => setIsClosed(!isClosed)} />
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu className="gap-1">
-            {/* Gap para que no estén pegados */}
             {navData.map((item) => {
               const isActive = location.pathname === item.url
-
               return (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className="h-8">
                   <SidebarMenuButton
                     asChild
                     isActive={isActive}
-                    className="p-0 h-18 overflow-hidden border border-transparent data-[active=true]:border-amber-200"
+                    className="p-0 overflow-hidden border border-transparent"
                   >
-                    <Link to={item.url} className="flex items-center w-full h-full">
+                    <Link
+                      to={item.url}
+                      className={`flex items-center w-full h-full m-0 
+                        ${
+                          isClosed
+                            ? isActive
+                              ? 'bg-primary! text-foreground'
+                              : 'bg-muted! text-muted-foreground'
+                            : ''
+                        }
+                        `}
+                    >
                       <div
                         className={`
-                            flex items-center justify-center w-12 h-full transition-colors 
+                            flex items-center justify-center w-12 h-full transition-colors
                             ${
-                              isActive
-                                ? 'bg-amber-500 text-white' // Color cuando está activo
-                                : 'bg-slate-100 text-slate-500'
+                              !isClosed
+                                ? isActive
+                                  ? 'bg-primary text-foreground'
+                                  : 'bg-muted text-muted-foreground'
+                                : isActive
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground'
                             }
                         `}
                       >
                         {item.icon && <item.icon size={20} />}
                       </div>
-
-                      {/* Contenedor del Texto */}
                       <span
                         className={`
                             flex-1 px-3 font-medium transition-colors
@@ -79,10 +98,21 @@ function AppSidebar(): JSX.Element {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 text-xs text-muted-foreground">
-        <Button variant={'outline'}>Logout</Button>v
-        {window.electron?.process.versions.app || '1.0.0'}
+      <SidebarFooter className="pb-4">
+        <SidebarMenuButton asChild>
+          <Link to={'/logout'} className="flex items-start w-full h-full">
+            <div
+              className={'flex items-center justify-center h-full transition-colors text-slate-500'}
+            >
+              <LogOut />
+            </div>
+            <span className={'flex-1 px-3 font-medium transition-colors text-slate-600'}>
+              Logout
+            </span>
+          </Link>
+        </SidebarMenuButton>
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   )
 }
