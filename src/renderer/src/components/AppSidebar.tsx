@@ -52,7 +52,7 @@ function AppSidebar(): JSX.Element {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive}
-                    className="p-0 overflow-hidden border border-transparent"
+                    className="p-0 overflow-hidden border border-accent bg-sidebar-item-background"
                   >
                     <Link
                       to={item.url}
@@ -73,10 +73,10 @@ function AppSidebar(): JSX.Element {
                               !isClosed
                                 ? isActive
                                   ? 'bg-primary text-foreground'
-                                  : 'bg-muted text-muted-foreground'
+                                  : 'bg-muted text-foreground'
                                 : isActive
                                   ? 'text-foreground'
-                                  : 'text-muted-foreground'
+                                  : 'text-foreground'
                             }
                         `}
                       >
@@ -85,7 +85,11 @@ function AppSidebar(): JSX.Element {
                       <span
                         className={`
                             flex-1 px-3 font-medium transition-colors
-                            ${isActive ? 'text-amber-900 bg-amber-50/50 h-full flex items-center' : 'text-slate-600'}
+                            ${
+                              isActive
+                                ? 'text-foreground h-full flex items-center '
+                                : 'text-foreground '
+                            }
                         `}
                       >
                         {item.title}
@@ -102,11 +106,11 @@ function AppSidebar(): JSX.Element {
         <SidebarMenuButton asChild>
           <Link to={'/logout'} className="flex items-start w-full h-full">
             <div
-              className={'flex items-center justify-center h-full transition-colors text-slate-500'}
+              className={'flex items-center justify-center h-full transition-colors text-muted-foreground'}
             >
               <LogOut />
             </div>
-            <span className={'flex-1 px-3 font-medium transition-colors text-slate-600'}>
+            <span className={'flex-1 px-3 font-medium transition-colors text-muted-foreground'}>
               Logout
             </span>
           </Link>

@@ -16,7 +16,9 @@ function Footer(): JSX.Element {
 
   return (
     <div className="w-full p-1 flex justify-between px-5">
-      <span className="text-sm">v {window.electron?.process.versions.app || '1.0.0'}</span>
+      <span className="text-sm text-muted-foreground">
+        v {window.electron?.process.versions.app || '1.0.0'}
+      </span>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
