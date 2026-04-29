@@ -60,8 +60,8 @@ function AppSidebar(): JSX.Element {
                         ${
                           isClosed
                             ? isActive
-                              ? 'bg-primary! text-foreground'
-                              : 'bg-muted! text-muted-foreground'
+                              ? 'bg-primary! text-foreground gap-2!'
+                              : 'bg-muted! text-muted-foreground gap-2!'
                             : ''
                         }
                         `}
