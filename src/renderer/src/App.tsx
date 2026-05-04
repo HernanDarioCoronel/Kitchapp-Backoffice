@@ -11,15 +11,15 @@ function AppContent(): React.JSX.Element {
   const { isAuthenticated, isAuthReady } = useAuth()
 
   if (!isAuthReady) {
-    return <div className="flex h-screen w-screen items-center justify-center">Cargando sesión...</div>
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">Cargando sesión...</div>
+    )
   }
 
-  // Si no está autenticado, solo mostramos la pantalla de Login
   if (!isAuthenticated) {
     return <Login />
   }
 
-  // Si está autenticado, mostramos el layout de la aplicación
   return (
     <>
       <AppSidebar />

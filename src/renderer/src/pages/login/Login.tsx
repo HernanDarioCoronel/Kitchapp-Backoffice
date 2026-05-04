@@ -28,10 +28,10 @@ function Login(): JSX.Element {
   const mutation = useMutation({
     mutationFn: async (credentials: LoginFormInputs) => {
       const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
-      return data // Asumimos que devuelve { token: "..." }
+      return data
     },
     onSuccess: (data) => {
-      login(data.accessToken || 'token-generico', data.refreshToken)
+      login(data.accessToken || 'token-generico', data.refreshToken, data.expiresIn)
       navigate('/')
     },
     onError: (error: Error) => {
