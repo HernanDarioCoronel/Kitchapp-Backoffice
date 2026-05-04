@@ -13,6 +13,13 @@ interface LoginFormInputs {
   password: string
 }
 
+interface LoginResponse {
+  tokenType: string
+  accessToken: string
+  expiresIn: number
+  refreshToken: string
+}
+
 function Login(): JSX.Element {
   const { register, handleSubmit } = useForm<LoginFormInputs>()
   const { login } = useAuth()
@@ -21,11 +28,12 @@ function Login(): JSX.Element {
   const mutation = useMutation({
     mutationFn: async (credentials: LoginFormInputs) => {
       console.log('Enviando credenciales:', credentials)
-      const { data } = await apiClient.post('/auth/login', credentials)
+      const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
       return data // Asumimos que devuelve { token: "..." }
     },
     onSuccess: (data) => {
-      login(data.token || 'token-generico')
+      console.log('Login exitoso, token recibido:', data)
+      login(data.accessToken || 'token-generico')
       navigate('/')
     },
     onError: (error: Error) => {
