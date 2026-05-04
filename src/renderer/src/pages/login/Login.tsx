@@ -27,13 +27,11 @@ function Login(): JSX.Element {
 
   const mutation = useMutation({
     mutationFn: async (credentials: LoginFormInputs) => {
-      console.log('Enviando credenciales:', credentials)
       const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
       return data // Asumimos que devuelve { token: "..." }
     },
     onSuccess: (data) => {
-      console.log('Login exitoso, token recibido:', data)
-      login(data.accessToken || 'token-generico')
+      login(data.accessToken || 'token-generico', data.refreshToken)
       navigate('/')
     },
     onError: (error: Error) => {

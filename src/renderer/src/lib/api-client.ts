@@ -7,6 +7,10 @@ const apiClient = axios.create({
 
 // Interceptor para agregar el token a todas las peticiones
 apiClient.interceptors.request.use((config) => {
+  if (config.url?.includes('/auth/refresh')) {
+    return config
+  }
+
   const token = localStorage.getItem('authToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`

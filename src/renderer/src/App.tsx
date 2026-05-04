@@ -8,7 +8,11 @@ import { useAuth } from './pages/login/hooks/useAuth'
 import Login from './pages/login/Login'
 
 function AppContent(): React.JSX.Element {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isAuthReady } = useAuth()
+
+  if (!isAuthReady) {
+    return <div className="flex h-screen w-screen items-center justify-center">Cargando sesión...</div>
+  }
 
   // Si no está autenticado, solo mostramos la pantalla de Login
   if (!isAuthenticated) {

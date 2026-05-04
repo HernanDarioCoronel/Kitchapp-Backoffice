@@ -1,5 +1,6 @@
 export interface AuthContextType {
   isAuthenticated: boolean
-  login: (token: string) => void
+  isAuthReady: boolean
+  login: (accessToken: string, refreshToken?: string) => void
   logout: () => void
 }
