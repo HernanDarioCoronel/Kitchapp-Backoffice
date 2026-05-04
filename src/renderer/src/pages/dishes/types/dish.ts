@@ -1,18 +1,20 @@
+import { UUID } from 'crypto'
+
 interface UnitType {
-  id: string
+  id: UUID
   name: string
   abbreviation: string
 }
 
 interface Allergen {
-  id: string
+  id: UUID
   name: string
   description: string
   product: string[]
 }
 
 interface Category {
-  id: string
+  id: UUID
   name: string
   description: string
   type: string
@@ -21,7 +23,7 @@ interface Category {
 }
 
 interface Product {
-  id: string
+  id: UUID
   sku: string
   name: string
   type: string
@@ -34,14 +36,14 @@ interface Product {
 }
 
 interface DishIngredient {
-  id: string
+  id: UUID
   product: Product
   quantity: number
   optional: boolean
 }
 
 interface Dish {
-  id: string
+  id: UUID
   name: string
   description: string
   prepTime: number

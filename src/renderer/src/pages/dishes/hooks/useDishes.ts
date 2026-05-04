@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchDishes } from '../api/dishes'
+import { fetchDishById, fetchDishes } from '../api/dishes'
 import { Dish } from '../types/dish'
+import { UUID } from 'crypto'
 
 interface UseDishesResult {
   data: Dish[] | undefined
@@ -8,12 +9,32 @@ interface UseDishesResult {
   isError: boolean
   error: unknown
 }
+interface UseGetDishByIdResult {
+  data: Dish | undefined
+  isLoading: boolean
+  isError: boolean
+  error: unknown
+}
+
+export const dishkeys = {
+  all: ['dishes'] as const,
+  details: (dishId: UUID) => [...dishkeys.all, dishId] as const
+}
 
 export function useDishes(): UseDishesResult {
   const { data, isLoading, isError, error } = useQuery<Dish[]>({
-    queryKey: ['dishes'],
+    queryKey: dishkeys.all,
     queryFn: fetchDishes
   })
 
+  return { data, isLoading, isError, error }
+}
+
+export function useGetDishById(dishId: UUID): UseGetDishByIdResult {
+  const { data, isLoading, isError, error } = useQuery<Dish>({
+    queryKey: dishkeys.details(dishId),
+    queryFn: () => fetchDishById(dishId),
+    enabled: !!dishId
+  })
   return { data, isLoading, isError, error }
 }
