@@ -6,7 +6,9 @@ function Dishes(): JSX.Element {
 
   if (isLoading) return <div>Cargando...</div>
   if (isError) return <div>Error: {(error as Error).message}</div>
-
+  if (data?.length === 0) {
+    return <div>No hay platos disponibles</div>
+  }
   return (
     <div>
       {data?.map((dish) => (

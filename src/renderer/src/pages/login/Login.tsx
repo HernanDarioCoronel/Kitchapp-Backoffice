@@ -1,6 +1,8 @@
 import { JSX } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
+import apiClient from '@/lib/api-client'
 import { useAuth } from './hooks/useAuth'
 import { Input } from '@renderer/components/ui/input'
 import { Button } from '@renderer/components/ui/button'
@@ -14,27 +16,17 @@ interface LoginFormInputs {
 function Login(): JSX.Element {
   const { register, handleSubmit } = useForm<LoginFormInputs>()
   const { login } = useAuth()
+  const navigate = useNavigate()
 
   const mutation = useMutation({
     mutationFn: async (credentials: LoginFormInputs) => {
       console.log('Enviando credenciales:', credentials)
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: {
-          accept: '*/*',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(credentials)
-      })
-
-      if (!response.ok) {
-        throw new Error('Credenciales inválidas o error en el servidor')
-      }
-
-      return response.json() // Asumimos que devuelve { token: "..." }
+      const { data } = await apiClient.post('/auth/login', credentials)
+      return data // Asumimos que devuelve { token: "..." }
     },
     onSuccess: (data) => {
       login(data.token || 'token-generico')
+      navigate('/')
     },
     onError: (error: Error) => {
       alert(error.message)

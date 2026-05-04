@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchDishes } from '../api/dishes'
-import { Dish } from '../types/Dish'
+import { Dish } from '../types/dish'
 
 interface UseDishesResult {
   data: Dish[] | undefined
