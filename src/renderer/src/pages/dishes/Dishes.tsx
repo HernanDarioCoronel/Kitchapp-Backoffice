@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '@renderer/components/ui/card'
 import placeholderImg from '@resources/placeholder.jpg'
 import { Eye, Timer } from 'lucide-react'
 import ProductDetailDialog from './components/ProductDetailDialog'
+import { UUID } from 'crypto'
 
 function Dishes(): JSX.Element {
   const { data, isLoading, isError, error } = useDishes()
@@ -18,7 +19,7 @@ function Dishes(): JSX.Element {
   return (
     <div className="h-full flex flex-wrap gap-4 m-4 items-start">
       {data?.map((dish) => (
-        <Card key={dish.id} className="w-72 flex-none border-primary border bg-card">
+        <Card key={dish.id as UUID} className="w-72 flex-none border-primary border bg-card">
           <CardHeader>
             <h3 className="w-full truncate text-lg font-bold">{dish.name}</h3>
           </CardHeader>
@@ -31,7 +32,7 @@ function Dishes(): JSX.Element {
               onClick={() => setOpenDialog(true)}
             >
               <ProductDetailDialog
-                productId={dish.id}
+                productId={dish.id as UUID}
                 open={openDialog}
                 onOpenChange={setOpenDialog}
               >
@@ -49,7 +50,7 @@ function Dishes(): JSX.Element {
                   <span>min</span>
                 </p>
               </div>
-              <p className="text-right w-full font-bold text-xl">${dish.price.toFixed(2)}</p>
+              <p className="text-right w-full font-bold text-xl">${dish.price!.toFixed(2)}</p>
             </div>
           </CardContent>
         </Card>
