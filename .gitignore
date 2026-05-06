@@ -1,7 +1,51 @@
-node_modules
-dist
-out
-.DS_Store
-.eslintcache
-*.log*
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+out/
+build/
+
+# Electron / Vite / frontend builds (si aplica)
+dist-electron/
+release/
+
+# Environment files
 .env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# Coverage
+coverage/
+
+# OpenAPI generated files (si decides regenerarlos)
+# src/api/types.ts
+# src/api/models/
+
+# Temporary files
+.tmp/
+.cache/
+
+# OpenAPI Generator output
+src/api/
