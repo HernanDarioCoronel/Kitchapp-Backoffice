@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchDishById, fetchDishes } from '../api/dishes'
-import { Dish } from '../types/dish'
+import type { Dish } from '@api/api'
 import { UUID } from 'crypto'
 
 interface UseDishesResult {

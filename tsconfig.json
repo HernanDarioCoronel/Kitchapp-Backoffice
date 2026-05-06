@@ -19,6 +19,9 @@
       ],
       "@resources/*": [
         "./resources/*"
+      ],
+      "@api/*": [
+        "./src/api/*"
       ]
     }
   }

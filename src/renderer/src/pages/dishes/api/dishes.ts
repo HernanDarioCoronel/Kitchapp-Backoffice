@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import { Dish } from '../types/dish'
+import type { Dish } from '@api/api'
 import { UUID } from 'crypto'
 
 export async function fetchDishes(): Promise<Dish[]> {

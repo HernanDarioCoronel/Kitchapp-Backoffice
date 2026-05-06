@@ -4,6 +4,7 @@
     "src/renderer/src/env.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.tsx",
+    "src/api/**/*.ts",
     "src/preload/*.d.ts"
   ],
   "compilerOptions": {
@@ -15,6 +16,9 @@
       ],
       "@/*": [
         "./src/renderer/src/*"
+      ],
+      "@api/*": [
+        "./src/api/*"
       ],
       "@resources/*": [
         "./resources/*"
