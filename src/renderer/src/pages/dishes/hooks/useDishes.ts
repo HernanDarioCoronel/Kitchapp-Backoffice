@@ -30,10 +30,13 @@ export function useDishes(): UseDishesResult {
   return { data, isLoading, isError, error }
 }
 
-export function useGetDishById(dishId: UUID): UseGetDishByIdResult {
+export function useGetDishById(
+  dishId: UUID,
+  withIngredients: boolean = false
+): UseGetDishByIdResult {
   const { data, isLoading, isError, error } = useQuery<Dish>({
     queryKey: dishkeys.details(dishId),
-    queryFn: () => fetchDishById(dishId),
+    queryFn: () => fetchDishById(dishId, withIngredients),
     enabled: !!dishId
   })
   return { data, isLoading, isError, error }

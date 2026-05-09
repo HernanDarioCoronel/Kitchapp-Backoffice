@@ -7,7 +7,9 @@ export async function fetchDishes(): Promise<Dish[]> {
   return data
 }
 
-export async function fetchDishById(dishId: UUID): Promise<Dish> {
-  const { data } = await apiClient.get<Dish>(`/dishes/${dishId}`)
+export async function fetchDishById(dishId: UUID, withIngredients: boolean = false): Promise<Dish> {
+  const { data } = await apiClient.get<Dish>(
+    `/dishes/${dishId}${withIngredients ? '?withIngredients=1' : ''}`
+  )
   return data
 }
