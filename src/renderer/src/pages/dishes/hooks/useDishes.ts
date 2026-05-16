@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { fetchDishById, fetchDishes } from '../api/dishes'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { deleteDishById, fetchDishById, fetchDishes } from '../api/dishes'
 import type { Dish } from '@api/api'
 import { UUID } from 'crypto'
 
@@ -40,4 +40,45 @@ export function useGetDishById(
     enabled: !!dishId
   })
   return { data, isLoading, isError, error }
+}
+
+export function useDeleteDishById(dishId: UUID): {
+  mutate: () => void
+  isSuccess: boolean
+  isPaused: boolean
+  isPending: boolean
+  isError: boolean
+  mutateAsync: () => Promise<void>
+} {
+  const queryClient = useQueryClient()
+  const { mutate, isSuccess, isPaused, isPending, isError, mutateAsync } = useMutation({
+    mutationFn: () => deleteDishById(dishId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dishkeys.all })
+    }
+  })
+  return { mutate, isSuccess, isPaused, isPending, isError, mutateAsync }
+}
+
+export function useDeleteDish(): {
+  mutate: (dishId: UUID) => void
+  mutateAsync: (dishId: UUID) => Promise<void>
+  isLoading: boolean
+  isError: boolean
+  isSuccess: boolean
+} {
+  const queryClient = useQueryClient()
+  const { mutate, mutateAsync, isPending, isError, isSuccess } = useMutation({
+    mutationFn: (dishId: UUID) => deleteDishById(dishId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dishkeys.all })
+    }
+  })
+  return {
+    mutate: (dishId: UUID) => mutate(dishId),
+    mutateAsync: (dishId: UUID) => mutateAsync(dishId),
+    isPending,
+    isError,
+    isSuccess
+  }
 }

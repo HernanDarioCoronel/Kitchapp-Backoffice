@@ -1,13 +1,15 @@
 import { JSX, useState } from 'react'
-import { useDishes } from './hooks/useDishes'
+import { useDishes, useDeleteDish } from './hooks/useDishes'
 import { Card, CardContent, CardHeader } from '@renderer/components/ui/card'
 import placeholderImg from '@resources/placeholder.jpg'
-import { Eye, Timer } from 'lucide-react'
+import { Eye, Timer, Trash2 } from 'lucide-react'
 import ProductDetailDialog from './components/ProductDetailDialog'
 import { UUID } from 'crypto'
+import DialogButton from '@renderer/components/DialogButton'
 
 function Dishes(): JSX.Element {
   const { data, isLoading, isError, error } = useDishes()
+  const { mutate: deleteDish } = useDeleteDish()
   const [openDialog, setOpenDialog] = useState(false)
 
   if (isLoading) return <div className="flex justify-center items-center">Cargando...</div>
@@ -19,7 +21,21 @@ function Dishes(): JSX.Element {
   return (
     <div className="h-full flex flex-wrap gap-4 m-4 items-start">
       {data?.map((dish) => (
-        <Card key={dish.id as UUID} className="w-72 flex-none border-primary border bg-card">
+        <Card
+          key={dish.id as UUID}
+          className="relative w-72 flex-none border-primary border bg-card"
+        >
+          <div className="absolute top-2 right-2 w-fit">
+            <DialogButton
+              triggerButtonContent={<Trash2 className="text-destructive" />}
+              title="Eliminar Plato"
+              description="¿Estás seguro de que quieres eliminar este plato?"
+              type="destructive"
+              onConfirm={() => deleteDish(dish.id as UUID)}
+              confirmText="Eliminar"
+              cancelText="Cancelar"
+            />
+          </div>
           <CardHeader>
             <h3 className="w-full truncate text-lg font-bold">{dish.name}</h3>
           </CardHeader>

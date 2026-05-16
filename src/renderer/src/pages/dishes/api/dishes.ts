@@ -13,3 +13,7 @@ export async function fetchDishById(dishId: UUID, withIngredients: boolean = fal
   )
   return data
 }
+
+export async function deleteDishById(dishId: UUID): Promise<void> {
+  await apiClient.delete(`/dishes/${dishId}`)
+}

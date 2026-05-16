@@ -9,8 +9,28 @@ import { JSX, ReactNode } from 'react'
 import { UUID } from 'crypto'
 import { useGetDishById } from '../hooks/useDishes'
 import placeholderImg from '@resources/placeholder.jpg'
-import { Table, TableCell, TableHeader, TableRow } from '@renderer/components/ui/table'
-import { Check, X } from 'lucide-react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@renderer/components/ui/table'
+import { Badge } from '@renderer/components/ui/badge'
+import { Separator } from '@renderer/components/ui/separator'
+import {
+  Check,
+  X,
+  Clock,
+  Tag,
+  Layers,
+  AlertTriangle,
+  ShoppingBasket,
+  CalendarDays,
+  Flame,
+  DollarSign
+} from 'lucide-react'
 
 interface ProductDetailDialogProps {
   productId: UUID
@@ -18,9 +38,29 @@ interface ProductDetailDialogProps {
   onOpenChange: (open: boolean) => void
   children?: string | ReactNode
 }
+
 const defaultButtonContent = (
   <button className="px-4 py-2 bg-primary text-white rounded">Ver Detalles</button>
 )
+
+function InfoRow({
+  icon,
+  label,
+  value
+}: {
+  icon: ReactNode
+  label: string
+  value: ReactNode
+}): JSX.Element {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-muted-foreground font-medium w-32 shrink-0">{label}</span>
+      <span className="text-foreground">{value}</span>
+    </div>
+  )
+}
+
 function ProductDetailDialog({
   productId,
   open,
@@ -29,61 +69,265 @@ function ProductDetailDialog({
 }: ProductDetailDialogProps): JSX.Element {
   const { data: dish, isLoading, isError, error } = useGetDishById(productId, true)
 
-  if (isLoading) return <div className="flex justify-center items-center">Cargando...</div>
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center p-8 text-muted-foreground">Cargando...</div>
+    )
   if (isError)
-    return <div className="flex justify-center items-center">Error: {(error as Error).message}</div>
+    return (
+      <div className="flex justify-center items-center p-8 text-destructive">
+        Error: {(error as Error).message}
+      </div>
+    )
   if (!dish) {
-    return <div className="flex justify-center items-center">No se encontró el plato</div>
+    return (
+      <div className="flex justify-center items-center p-8 text-muted-foreground">
+        No se encontró el plato
+      </div>
+    )
   }
 
-  const cost = dish.dishIngredientList?.reduce(({ product, quantity }) => {
-    if (!product) return 0
-    return product.cost * quantity
+  const cost = dish.dishIngredientList?.reduce((acc, { product, quantity }) => {
+    if (!product || !quantity) return acc
+    return acc + (product.cost ?? 0) * quantity
   }, 0)
+
+  const totalCalories = dish.dishIngredientList?.reduce((acc, { product, quantity }) => {
+    if (!product?.caloriesPer100g || !quantity) return acc
+    return acc + (product.caloriesPer100g * quantity) / 100
+  }, 0)
+
+  const formattedDate = dish.createdAt
+    ? new Date(dish.createdAt).toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })
+    : '—'
+
+  // Collect all allergens from all ingredients
+  const allAllergens =
+    dish.dishIngredientList?.flatMap(({ product }) =>
+      product?.allergens ? Array.from(product.allergens) : []
+    ) ?? []
+
+  const uniqueAllergens = Array.from(new Map(allAllergens.map((a) => [a.id, a])).values())
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="bg-card p-6 rounded-lg max-w-fit!">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold">{dish.name}</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-row gap-x-2">
-          <div className="w-96">
-            <img
-              src={`${dish.imageUrl ?? placeholderImg}`}
-              alt="Plato"
-              className="w-full h-48 object-cover mb-4 rounded"
-            />
-            <p className="mb-4">{dish.description}</p>
-            <div>
-              <p className="font-bold text-lg">${(cost ?? 0).toFixed(2)}</p>
+      <DialogContent className="bg-card p-0 rounded-xl max-w-3xl! overflow-hidden">
+        {/* Header image band */}
+        <div className="relative h-52 w-full overflow-hidden">
+          <img
+            src={dish.imageUrl ?? placeholderImg}
+            alt={dish.name}
+            className="w-full h-full object-cover"
+          />
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent" />
+
+          {/* Availability badge */}
+          <div className="absolute top-3 right-3">
+            <Badge
+              variant={dish.isAvailable ? 'default' : 'destructive'}
+              className="gap-1 text-xs font-semibold"
+            >
+              {dish.isAvailable ? (
+                <>
+                  <Check className="w-3 h-3" /> Disponible
+                </>
+              ) : (
+                <>
+                  <X className="w-3 h-3" /> No disponible
+                </>
+              )}
+            </Badge>
+          </div>
+
+          {/* Title over image */}
+          <div className="absolute bottom-0 left-0 p-5">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-white drop-shadow">
+                {dish.name}
+              </DialogTitle>
+              {dish.dishCategory && (
+                <p className="text-white/80 text-sm mt-0.5">{dish.dishCategory.name}</p>
+              )}
+            </DialogHeader>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 flex flex-col gap-5 max-h-[60vh] overflow-y-auto">
+          {/* Description */}
+          {dish.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed">{dish.description}</p>
+          )}
+
+          {/* Key metrics row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-muted/50 px-4 py-3 flex flex-col items-center gap-1">
+              <DollarSign className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Precio</span>
+              <span className="font-bold text-lg">${(dish.price ?? 0).toFixed(2)}</span>
+            </div>
+            <div className="rounded-lg bg-muted/50 px-4 py-3 flex flex-col items-center gap-1">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Prep. tiempo</span>
+              <span className="font-bold text-lg">
+                {dish.prepTime ?? '—'}
+                <span className="text-sm font-normal"> min</span>
+              </span>
+            </div>
+            <div className="rounded-lg bg-muted/50 px-4 py-3 flex flex-col items-center gap-1">
+              <Flame className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Calorías tot.</span>
+              <span className="font-bold text-lg">
+                {totalCalories ? totalCalories.toFixed(0) : '—'}
+                <span className="text-sm font-normal"> kcal</span>
+              </span>
             </div>
           </div>
-          <div className="w-fit">
-            {dish.dishIngredientList && dish.dishIngredientList.length > 0 && (
-              <Table className="inline-block mr-2">
-                <TableHeader>
-                  <TableRow>
-                    <TableCell>Ingrediente</TableCell>
-                    <TableCell>Cantidad</TableCell>
-                    <TableCell>Kcal P/100g</TableCell>
-                    <TableCell>Requerido</TableCell>
-                  </TableRow>
-                </TableHeader>
-                {dish.dishIngredientList.map(({ id, optional, product, quantity }) => (
-                  <TableRow key={id}>
-                    <TableCell>{product?.name}</TableCell>
-                    <TableCell>
-                      {quantity} {product?.unitType?.abbreviation}
-                    </TableCell>
-                    <TableCell>{product?.caloriesPer100g ?? 0}Kcal</TableCell>
-                    <TableCell>{!optional ? <Check /> : <X />}</TableCell>
-                  </TableRow>
-                ))}
-              </Table>
+
+          <Separator />
+
+          {/* General info */}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-foreground mb-1">Información general</h3>
+            <InfoRow
+              icon={<Tag className="w-4 h-4" />}
+              label="Categoría"
+              value={
+                dish.dishCategory ? (
+                  <span className="flex items-center gap-1">
+                    {dish.dishCategory.name}
+                    {dish.dishCategory.type && (
+                      <Badge variant="outline" className="text-xs ml-1">
+                        {dish.dishCategory.type}
+                      </Badge>
+                    )}
+                    {dish.dishCategory.active === false && (
+                      <Badge variant="destructive" className="text-xs ml-1">
+                        Inactiva
+                      </Badge>
+                    )}
+                  </span>
+                ) : (
+                  '—'
+                )
+              }
+            />
+            <InfoRow
+              icon={<CalendarDays className="w-4 h-4" />}
+              label="Creado el"
+              value={formattedDate}
+            />
+            {cost !== undefined && (
+              <InfoRow
+                icon={<ShoppingBasket className="w-4 h-4" />}
+                label="Coste ingredientes"
+                value={<span className="font-semibold">${cost.toFixed(2)}</span>}
+              />
             )}
           </div>
+
+          {/* Allergens */}
+          {uniqueAllergens.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  Alérgenos
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {uniqueAllergens.map((allergen) => (
+                    <Badge
+                      key={allergen.id}
+                      variant="outline"
+                      className="border-amber-400 text-amber-600 dark:text-amber-400 text-xs"
+                    >
+                      {allergen.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Ingredients table */}
+          {dish.dishIngredientList && dish.dishIngredientList.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  <Layers className="w-4 h-4" />
+                  Ingredientes
+                </h3>
+                <div className="rounded-lg border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="text-xs">Ingrediente</TableHead>
+                        <TableHead className="text-xs">SKU</TableHead>
+                        <TableHead className="text-xs">Categoría</TableHead>
+                        <TableHead className="text-xs">Cantidad</TableHead>
+                        <TableHead className="text-xs">Kcal/100g</TableHead>
+                        <TableHead className="text-xs">Tipo</TableHead>
+                        <TableHead className="text-xs">Requerido</TableHead>
+                        <TableHead className="text-xs">Activo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {dish.dishIngredientList.map(({ id, optional, product, quantity }) => (
+                        <TableRow key={id}>
+                          <TableCell className="font-medium text-sm">
+                            {product?.name ?? '—'}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground font-mono">
+                            {product?.sku ?? '—'}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {product?.category?.name ?? '—'}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {quantity} {product?.unitType?.abbreviation ?? ''}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {product?.caloriesPer100g != null
+                              ? `${product.caloriesPer100g} kcal`
+                              : '—'}
+                          </TableCell>
+                          <TableCell>
+                            {product?.type && (
+                              <Badge variant="secondary" className="text-xs">
+                                {product.type}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {!optional ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <X className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {product?.isActive ? (
+                              <Check className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <X className="w-4 h-4 text-destructive" />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
