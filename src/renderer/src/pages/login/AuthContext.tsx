@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, ReactNode, JSX } from 'react'
+import { useEffect, useRef, useState, useCallback, ReactNode, JSX } from 'react'
 import { AuthContextType } from './types/auth'
 import apiClient from '@/lib/api-client'
 
@@ -20,7 +20,6 @@ function getRefreshDelay(expiresIn?: number): number | null {
   if (expiresIn === undefined || Number.isNaN(expiresIn)) {
     return null
   }
-
   const expiresAt = Date.now() + expiresIn * 1000
   const delay = expiresAt - Date.now() - REFRESH_SAFETY_WINDOW_MS
   return Math.max(0, delay)
@@ -33,37 +32,59 @@ export function AuthProvider({ children, AuthContext }: AuthProviderProps): JSX.
   const [isAuthReady, setIsAuthReady] = useState<boolean>(() => {
     return !localStorage.getItem('refreshToken')
   })
+
   const refreshTimerRef = useRef<number | null>(null)
 
-  const clearRefreshTimer = (): void => {
+  // Fix 1: useRef<T>() with no arg requires undefined as the type param
+  const refreshSessionRef = useRef<(() => Promise<void>) | undefined>(undefined)
+
+  const clearRefreshTimer = useCallback((): void => {
     if (refreshTimerRef.current !== null) {
       window.clearTimeout(refreshTimerRef.current)
       refreshTimerRef.current = null
     }
-  }
+  }, [])
 
-  const scheduleRefresh = (expiresIn?: number): void => {
+  const scheduleRefresh = useCallback(
+    (expiresIn?: number): void => {
+      clearRefreshTimer()
+      const delay = getRefreshDelay(expiresIn)
+      if (delay === null) return
+      refreshTimerRef.current = window.setTimeout(() => {
+        void refreshSessionRef.current?.()
+      }, delay)
+    },
+    [clearRefreshTimer]
+  )
+
+  const logout = useCallback((): void => {
     clearRefreshTimer()
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
+    setIsAuthenticated(false)
+  }, [clearRefreshTimer])
 
-    const delay = getRefreshDelay(expiresIn)
-    if (delay === null) {
-      return
-    }
+  const login = useCallback(
+    (accessToken: string, refreshToken?: string, expiresIn?: number): void => {
+      localStorage.setItem('authToken', accessToken)
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken)
+      } else {
+        localStorage.removeItem('refreshToken')
+      }
+      setIsAuthenticated(true)
+      scheduleRefresh(expiresIn)
+    },
+    [scheduleRefresh]
+  )
 
-    refreshTimerRef.current = window.setTimeout(() => {
-      void refreshSession()
-    }, delay)
-  }
-
-  const refreshSession = async (): Promise<void> => {
+  const refreshSession = useCallback(async (): Promise<void> => {
     const refreshToken = localStorage.getItem('refreshToken')
-
     if (!refreshToken) {
       logout()
       setIsAuthReady(true)
       return
     }
-
     try {
       const { data } = await apiClient.post<AuthResponse>('/auth/refresh', { refreshToken })
       login(data.accessToken, data.refreshToken, data.expiresIn)
@@ -72,38 +93,27 @@ export function AuthProvider({ children, AuthContext }: AuthProviderProps): JSX.
     } finally {
       setIsAuthReady(true)
     }
-  }
+  }, [login, logout])
 
-  const login = (accessToken: string, refreshToken?: string, expiresIn?: number): void => {
-    localStorage.setItem('authToken', accessToken)
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken)
-    } else {
-      localStorage.removeItem('refreshToken')
-    }
-    setIsAuthenticated(true)
-    scheduleRefresh(expiresIn)
-  }
-
-  const logout = (): void => {
-    clearRefreshTimer()
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('refreshToken')
-    setIsAuthenticated(false)
-  }
-
+  // Fix 2: update the ref inside an effect, not during render
   useEffect(() => {
-    const refreshToken = localStorage.getItem('refreshToken')
+    refreshSessionRef.current = refreshSession
+  }, [refreshSession])
 
-    if (!refreshToken) {
-      return
+  // Fix 3: don't call refreshSession() directly in the effect body —
+  // invoke it inside a local async function so setState calls happen
+  // asynchronously and don't trigger the cascading-renders warning
+  useEffect(() => {
+    if (!localStorage.getItem('refreshToken')) return
+
+    const run = async (): Promise<void> => {
+      await refreshSession()
     }
 
-    void refreshSession()
-    return () => {
-      clearRefreshTimer()
-    }
-  }, [])
+    void run()
+
+    return () => clearRefreshTimer()
+  }, [refreshSession, clearRefreshTimer])
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, isAuthReady, login, logout }}>
