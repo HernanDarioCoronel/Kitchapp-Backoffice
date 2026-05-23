@@ -12,7 +12,8 @@ export default defineConfig(
       '**/dist',
       '**/out',
       '**/src/renderer/src/components',
-      '**/vite.config.ts'
+      '**/vite.config.ts',
+      '**/src/api'
     ]
   },
   tseslint.configs.recommended,

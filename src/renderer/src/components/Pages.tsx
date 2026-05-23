@@ -1,12 +1,15 @@
 import { useSetTitle } from '@renderer/hooks/use-set-title'
 import Dashboard from '@renderer/pages/dashboard/Dashboard'
 import Dishes from '@renderer/pages/dishes/Dishes'
+import NotFound from '@renderer/pages/notFound'
+import Products from '@renderer/pages/products/Products'
 import { JSX, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 
 const ROUTES: Record<string, string> = {
   '/': 'Dashboard',
-  '/dishes': 'Dishes'
+  '/dishes': 'Dishes',
+  '/products': 'Products'
 }
 
 function Pages(): JSX.Element {
@@ -22,6 +25,8 @@ function Pages(): JSX.Element {
     <Routes>
       <Route index path={ROUTES['/']} element={<Dashboard />} />
       <Route path={ROUTES['/dishes']} element={<Dishes />} />
+      <Route path={ROUTES['/products']} element={<Products />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

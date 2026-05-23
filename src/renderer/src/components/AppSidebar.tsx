@@ -1,7 +1,6 @@
 import {
   BadgeEuro,
   BottleWine,
-  Carrot,
   ChefHat,
   HandPlatter,
   LayoutDashboardIcon,
@@ -28,7 +27,6 @@ const navData = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboardIcon },
   { title: 'Dishes', url: '/dishes', icon: Utensils },
   { title: 'Products', url: '/products', icon: BottleWine },
-  { title: 'Ingredients', url: '/ingredients', icon: Carrot },
   { title: 'Orders', url: '/orders', icon: HandPlatter },
   { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
   { title: 'TPV', url: '/tpv', icon: BadgeEuro }
