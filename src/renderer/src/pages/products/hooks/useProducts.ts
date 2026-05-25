@@ -25,13 +25,14 @@ interface UseGetProductByIdResult {
 }
 
 export const productKeys = {
-  all: ['products'] as const,
-  details: (id: UUID) => [...productKeys.all, id] as const
+  root: ['products'] as const,
+  list: (type: ProductRequestType) => ['products', type] as const,
+  details: (id: UUID) => ['products', id] as const
 }
 
 export function useProducts(type: ProductRequestType): UseProductsResult {
   const { data, isLoading, isError, error } = useQuery<Product[]>({
-    queryKey: productKeys.all,
+    queryKey: productKeys.list(type),
     queryFn: () => fetchProducts(type)
   })
   return { data, isLoading, isError, error }
@@ -55,7 +56,7 @@ export function useDeleteProduct(): {
   const queryClient = useQueryClient()
   const { mutate, isPending, isError, isSuccess } = useMutation<void, unknown, UUID>({
     mutationFn: (id: UUID) => deleteProductById(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.all })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
   })
   return { mutate: (id: UUID) => mutate(id), isLoading: isPending, isError, isSuccess }
 }
@@ -70,7 +71,7 @@ export function useCreateProduct(): {
   const { mutate, isPending, isError, isSuccess } = useMutation<Product, unknown, Partial<Product>>(
     {
       mutationFn: (payload: Partial<Product>) => createProduct(payload),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.all })
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
     }
   )
   return {
@@ -95,7 +96,7 @@ export function useUpdateProduct(): {
   >({
     mutationFn: ({ id, payload }: { id: UUID; payload: Partial<Product> }) =>
       updateProduct(id, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.all })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
   })
   return {
     mutate: (args: { id: UUID; payload: Partial<Product> }) => mutate(args),
