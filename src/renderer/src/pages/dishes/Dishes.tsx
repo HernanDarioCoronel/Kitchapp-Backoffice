@@ -1,4 +1,5 @@
 import { JSX, useState } from 'react'
+import { useSearch } from '@renderer/components/SearchContext'
 import { useDishes, useDeleteDish } from './hooks/useDishes'
 import { Card, CardContent, CardHeader } from '@renderer/components/ui/card'
 import placeholderImg from '@resources/placeholder.jpg'
@@ -11,6 +12,7 @@ function Dishes(): JSX.Element {
   const { data, isLoading, isError, error } = useDishes()
   const { mutate: deleteDish } = useDeleteDish()
   const [openDialog, setOpenDialog] = useState(false)
+  const { query } = useSearch()
 
   if (isLoading) return <div className="flex justify-center items-center">Cargando...</div>
   if (isError)
@@ -18,9 +20,25 @@ function Dishes(): JSX.Element {
   if (data?.length === 0) {
     return <div className="flex justify-center items-center">No hay platos disponibles</div>
   }
+  // Apply search filtering (if any)
+  let filtered = data
+  if (query && query.trim() !== '') {
+    const q = query.toLowerCase()
+    filtered = data?.filter((dish) => {
+      return (
+        dish.name.toLowerCase().includes(q) ||
+        (dish.description ?? '').toLowerCase().includes(q)
+      )
+    })
+  }
+
+  if (filtered?.length === 0) {
+    return <div className="flex justify-center items-center">No hay platos que coincidan</div>
+  }
+
   return (
     <div className="h-full flex flex-wrap gap-4 m-4 items-start">
-      {data?.map((dish) => (
+      {filtered?.map((dish) => (
         <Card
           key={dish.id as UUID}
           className="relative w-72 flex-none border-primary border bg-card"

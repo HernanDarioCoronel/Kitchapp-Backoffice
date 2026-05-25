@@ -1,4 +1,5 @@
 import { JSX, useMemo, useState } from 'react'
+import { useSearch } from '@renderer/components/SearchContext'
 import {
   Table,
   TableBody,
@@ -44,7 +45,14 @@ function Products(): JSX.Element {
     unit: ''
   })
 
-  const rows: Product[] = useMemo(() => data ?? [], [data])
+  const { query } = useSearch()
+
+  const rows: Product[] = useMemo(() => {
+    const base = data ?? []
+    if (!query || query.trim() === '') return base
+    const q = query.toLowerCase()
+    return base.filter((p) => (p.name ?? '').toLowerCase().includes(q) || (p.sku ?? '').toLowerCase().includes(q))
+  }, [data, query])
 
   function openCreate(): void {
     setEditing(null)

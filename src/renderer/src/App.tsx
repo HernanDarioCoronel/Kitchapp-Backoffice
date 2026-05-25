@@ -2,6 +2,7 @@ import AppSidebar from './components/AppSidebar'
 import Footer from './components/Footer'
 import Pages from './components/Pages'
 import TopBar from './components/TopBar'
+import { SearchProvider } from './components/SearchContext'
 import { AuthProvider } from './pages/login/AuthContext'
 import AuthContext from './pages/login/context/AuthContext'
 import { useAuth } from './pages/login/hooks/useAuth'
@@ -35,7 +36,9 @@ function AppContent(): React.JSX.Element {
 function App(): React.JSX.Element {
   return (
     <AuthProvider AuthContext={AuthContext}>
-      <AppContent />
+      <SearchProvider>
+        <AppContent />
+      </SearchProvider>
     </AuthProvider>
   )
 }
