@@ -9,9 +9,11 @@ import {
   TableHead
 } from '@renderer/components/ui/table'
 import {
+  useCategories,
   useCreateProduct,
   useDeleteProduct,
   useProducts,
+  useUnitTypes,
   useUpdateProduct
 } from './hooks/useProducts'
 import { Button } from '@renderer/components/ui/button'
@@ -38,11 +40,14 @@ import { Plus, Edit2, Trash2 } from 'lucide-react'
 import DialogButton from '@renderer/components/DialogButton'
 import { ProductRequestType } from './api/products'
 import { Product, ProductTypeEnum } from '@api/api'
+import { UUID } from 'crypto'
 
 interface ProductForm {
   sku: string
   name: string
   type: ProductTypeEnum
+  categoryId: string
+  unitTypeId: string
   caloriesPer100g: string
   isActive: boolean
 }
@@ -51,6 +56,8 @@ const EMPTY_FORM: ProductForm = {
   sku: '',
   name: '',
   type: ProductTypeEnum.Ingredient,
+  categoryId: '',
+  unitTypeId: '',
   caloriesPer100g: '',
   isActive: true
 }
@@ -61,6 +68,8 @@ function Products(): JSX.Element {
   const { mutate: createProduct } = useCreateProduct()
   const { mutate: deleteProduct } = useDeleteProduct()
   const { mutate: updateProduct } = useUpdateProduct()
+  const { data: categories } = useCategories()
+  const { data: unitTypes } = useUnitTypes()
 
   const [openForm, setOpenForm] = useState<boolean>(false)
   const [editing, setEditing] = useState<Product | null>(null)
@@ -89,6 +98,8 @@ function Products(): JSX.Element {
       sku: item.sku ?? '',
       name: item.name ?? '',
       type: (item.type as ProductTypeEnum) ?? ProductTypeEnum.Ingredient,
+      categoryId: item.category?.id ?? '',
+      unitTypeId: item.unitType?.id ?? '',
       caloriesPer100g: item.caloriesPer100g != null ? String(item.caloriesPer100g) : '',
       isActive: item.isActive ?? true
     })
@@ -96,15 +107,17 @@ function Products(): JSX.Element {
   }
 
   function handleSubmit(): void {
-    const payload: Partial<Product> = {
+    const payload = {
       sku: form.sku || undefined,
       name: form.name || undefined,
       type: form.type,
+      categoryId: form.categoryId || undefined,
+      unitTypeId: form.unitTypeId || undefined,
       caloriesPer100g: form.caloriesPer100g ? Number(form.caloriesPer100g) : undefined,
       isActive: form.isActive
     }
     if (editing?.id) {
-      updateProduct({ id: editing.id as unknown as import('crypto').UUID, payload })
+      updateProduct({ id: editing.id as UUID, payload })
     } else {
       createProduct(payload)
     }
@@ -178,6 +191,42 @@ function Products(): JSX.Element {
                   </Select>
                 </div>
                 <div className="grid gap-1">
+                  <Label>Categoría</Label>
+                  <Select
+                    value={form.categoryId}
+                    onValueChange={(v) => setForm((s) => ({ ...s, categoryId: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(categories ?? []).map((c) => (
+                        <SelectItem key={c.id} value={c.id ?? ''}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1">
+                  <Label>Unidad de medida</Label>
+                  <Select
+                    value={form.unitTypeId}
+                    onValueChange={(v) => setForm((s) => ({ ...s, unitTypeId: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar unidad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(unitTypes ?? []).map((u) => (
+                        <SelectItem key={u.id} value={u.id ?? ''}>
+                          {u.name} ({u.abbreviation})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1">
                   <Label>Kcal cada 100g</Label>
                   <Input
                     type="number"
@@ -241,7 +290,7 @@ function Products(): JSX.Element {
                     type="destructive"
                     onConfirm={(): void => {
                       if (item.id) {
-                        deleteProduct(item.id as unknown as import('crypto').UUID)
+                        deleteProduct(item.id as UUID)
                       }
                     }}
                     confirmText="Eliminar"

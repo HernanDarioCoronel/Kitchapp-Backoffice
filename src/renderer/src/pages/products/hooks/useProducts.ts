@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createProduct,
   deleteProductById,
+  fetchCategories,
   fetchProductById,
   fetchProducts,
+  fetchUnitTypes,
   ProductRequestType,
   updateProduct
 } from '../api/products'
 import { UUID } from 'crypto'
-import { Product } from '@api/index'
+import { Category, Product, ProductRequest, UnitType } from '@api/index'
 
 interface UseProductsResult {
   data: Product[] | undefined
@@ -62,20 +64,18 @@ export function useDeleteProduct(): {
 }
 
 export function useCreateProduct(): {
-  mutate: (payload: Partial<Product>) => void
+  mutate: (payload: ProductRequest) => void
   isLoading: boolean
   isError: boolean
   isSuccess: boolean
 } {
   const queryClient = useQueryClient()
-  const { mutate, isPending, isError, isSuccess } = useMutation<Product, unknown, Partial<Product>>(
-    {
-      mutationFn: (payload: Partial<Product>) => createProduct(payload),
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
-    }
-  )
+  const { mutate, isPending, isError, isSuccess } = useMutation<Product, unknown, ProductRequest>({
+    mutationFn: (payload: ProductRequest) => createProduct(payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
+  })
   return {
-    mutate: (payload: Partial<Product>) => mutate(payload),
+    mutate: (payload: ProductRequest) => mutate(payload),
     isLoading: isPending,
     isError,
     isSuccess
@@ -83,7 +83,7 @@ export function useCreateProduct(): {
 }
 
 export function useUpdateProduct(): {
-  mutate: (args: { id: UUID; payload: Partial<Product> }) => void
+  mutate: (args: { id: UUID; payload: ProductRequest }) => void
   isLoading: boolean
   isError: boolean
   isSuccess: boolean
@@ -92,16 +92,32 @@ export function useUpdateProduct(): {
   const { mutate, isPending, isError, isSuccess } = useMutation<
     Product,
     unknown,
-    { id: UUID; payload: Partial<Product> }
+    { id: UUID; payload: ProductRequest }
   >({
-    mutationFn: ({ id, payload }: { id: UUID; payload: Partial<Product> }) =>
+    mutationFn: ({ id, payload }: { id: UUID; payload: ProductRequest }) =>
       updateProduct(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
   })
   return {
-    mutate: (args: { id: UUID; payload: Partial<Product> }) => mutate(args),
+    mutate: (args: { id: UUID; payload: ProductRequest }) => mutate(args),
     isLoading: isPending,
     isError,
     isSuccess
   }
+}
+
+export function useCategories(): { data: Category[] | undefined; isLoading: boolean } {
+  const { data, isLoading } = useQuery<Category[]>({
+    queryKey: ['categories'],
+    queryFn: fetchCategories
+  })
+  return { data, isLoading }
+}
+
+export function useUnitTypes(): { data: UnitType[] | undefined; isLoading: boolean } {
+  const { data, isLoading } = useQuery<UnitType[]>({
+    queryKey: ['unit-types'],
+    queryFn: fetchUnitTypes
+  })
+  return { data, isLoading }
 }

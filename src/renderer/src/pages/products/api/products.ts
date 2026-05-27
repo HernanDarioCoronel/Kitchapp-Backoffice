@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import { Product } from '@api/api'
+import { Category, Product, ProductRequest, UnitType } from '@api/api'
 import { UUID } from 'crypto'
 
 export enum ProductRequestType {
@@ -20,16 +20,26 @@ export async function fetchProductById(productId: UUID): Promise<Product> {
   return data
 }
 
-export async function createProduct(payload: Partial<Product>): Promise<Product> {
+export async function createProduct(payload: ProductRequest): Promise<Product> {
   const { data } = await apiClient.post<Product>('/products', payload)
   return data
 }
 
-export async function updateProduct(productId: UUID, payload: Partial<Product>): Promise<Product> {
+export async function updateProduct(productId: UUID, payload: ProductRequest): Promise<Product> {
   const { data } = await apiClient.patch<Product>(`/products/${productId}`, payload)
   return data
 }
 
 export async function deleteProductById(productId: UUID): Promise<void> {
   await apiClient.delete(`/products/${productId}`)
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const { data } = await apiClient.get<Category[]>('/categories')
+  return data
+}
+
+export async function fetchUnitTypes(): Promise<UnitType[]> {
+  const { data } = await apiClient.get<UnitType[]>('/unit-types')
+  return data
 }
