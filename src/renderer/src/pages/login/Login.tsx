@@ -8,9 +8,15 @@ import { Input } from '@renderer/components/ui/input'
 import { Button } from '@renderer/components/ui/button'
 import { Label } from '@renderer/components/ui/label'
 
-interface LoginFormInputs {
+const SAVED_USERNAME_KEY = 'savedUsername'
+
+interface LoginCredentials {
   username: string
   password: string
+}
+
+interface LoginFormInputs extends LoginCredentials {
+  rememberUsername: boolean
 }
 
 interface LoginResponse {
@@ -21,12 +27,19 @@ interface LoginResponse {
 }
 
 function Login(): JSX.Element {
-  const { register, handleSubmit } = useForm<LoginFormInputs>()
+  const savedUsername = localStorage.getItem(SAVED_USERNAME_KEY) ?? ''
+
+  const { register, handleSubmit } = useForm<LoginFormInputs>({
+    defaultValues: {
+      username: savedUsername,
+      rememberUsername: savedUsername !== ''
+    }
+  })
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const mutation = useMutation({
-    mutationFn: async (credentials: LoginFormInputs) => {
+    mutationFn: async (credentials: LoginCredentials) => {
       const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
       return data
     },
@@ -39,8 +52,13 @@ function Login(): JSX.Element {
     }
   })
 
-  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
-    mutation.mutate(data)
+  const onSubmit: SubmitHandler<LoginFormInputs> = ({ rememberUsername, ...credentials }) => {
+    if (rememberUsername) {
+      localStorage.setItem(SAVED_USERNAME_KEY, credentials.username)
+    } else {
+      localStorage.removeItem(SAVED_USERNAME_KEY)
+    }
+    mutation.mutate(credentials)
   }
 
   return (
@@ -57,10 +75,16 @@ function Login(): JSX.Element {
           <Input type="text" id="username" {...register('username', { required: true })} />
         </div>
         <div className="flex flex-col gap-y-2">
-          <Label htmlFor="username" className="pl-1">
+          <Label htmlFor="password" className="pl-1">
             Contraseña:
           </Label>
           <Input type="password" id="password" {...register('password', { required: true })} />
+        </div>
+        <div className="flex items-center gap-x-2">
+          <input type="checkbox" id="rememberUsername" {...register('rememberUsername')} />
+          <Label htmlFor="rememberUsername" className="cursor-pointer font-normal">
+            Recordar usuario
+          </Label>
         </div>
         <Button className="mt-4" type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? 'Iniciando sesión...' : 'Entrar'}
