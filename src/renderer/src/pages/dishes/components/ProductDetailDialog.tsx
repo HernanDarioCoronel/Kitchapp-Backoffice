@@ -9,6 +9,14 @@ import { JSX, ReactNode } from 'react'
 import { UUID } from 'crypto'
 import { useGetDishById } from '../hooks/useDishes'
 import placeholderImg from '@resources/placeholder.jpg'
+
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api'
+
+function getImageUrl(imageUrl: string | null | undefined): string {
+  if (!imageUrl) return placeholderImg
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
+  return `${API_BASE}/images/${imageUrl}`
+}
 import {
   Table,
   TableBody,
@@ -39,10 +47,6 @@ interface ProductDetailDialogProps {
   children?: string | ReactNode
 }
 
-const defaultButtonContent = (
-  <button className="px-4 py-2 bg-primary text-white rounded">Ver Detalles</button>
-)
-
 function InfoRow({
   icon,
   label,
@@ -65,39 +69,21 @@ function ProductDetailDialog({
   productId,
   open,
   onOpenChange,
-  children = defaultButtonContent
+  children
 }: ProductDetailDialogProps): JSX.Element {
   const { data: dish, isLoading, isError, error } = useGetDishById(productId, true)
 
-  if (isLoading)
-    return (
-      <div className="flex justify-center items-center p-8 text-muted-foreground">Cargando...</div>
-    )
-  if (isError)
-    return (
-      <div className="flex justify-center items-center p-8 text-destructive">
-        Error: {(error as Error).message}
-      </div>
-    )
-  if (!dish) {
-    return (
-      <div className="flex justify-center items-center p-8 text-muted-foreground">
-        No se encontró el plato
-      </div>
-    )
-  }
-
-  const cost = dish.dishIngredientList?.reduce((acc, { product, quantity }) => {
+  const cost = dish?.dishIngredientList?.reduce((acc, { product, quantity }) => {
     if (!product || !quantity) return acc
     return acc + (product.cost ?? 0) * quantity
   }, 0)
 
-  const totalCalories = dish.dishIngredientList?.reduce((acc, { product, quantity }) => {
+  const totalCalories = dish?.dishIngredientList?.reduce((acc, { product, quantity }) => {
     if (!product?.caloriesPer100g || !quantity) return acc
     return acc + (product.caloriesPer100g * quantity) / 100
   }, 0)
 
-  const formattedDate = dish.createdAt
+  const formattedDate = dish?.createdAt
     ? new Date(dish.createdAt).toLocaleDateString('es-ES', {
         day: '2-digit',
         month: 'long',
@@ -105,9 +91,8 @@ function ProductDetailDialog({
       })
     : '—'
 
-  // Collect all allergens from all ingredients
   const allAllergens =
-    dish.dishIngredientList?.flatMap(({ product }) =>
+    dish?.dishIngredientList?.flatMap(({ product }) =>
       product?.allergens ? Array.from(product.allergens) : []
     ) ?? []
 
@@ -115,20 +100,37 @@ function ProductDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="bg-card p-0 rounded-xl max-w-3xl! overflow-hidden">
+        {isLoading && (
+          <div className="flex justify-center items-center p-8 text-muted-foreground h-52">
+            Cargando...
+          </div>
+        )}
+        {isError && (
+          <div className="flex justify-center items-center p-8 text-destructive h-52">
+            Error: {(error as Error).message}
+          </div>
+        )}
+        {!isLoading && !isError && !dish && (
+          <div className="flex justify-center items-center p-8 text-muted-foreground h-52">
+            No se encontró el plato
+          </div>
+        )}
+        {dish && (
+          <>
         {/* Header image band */}
         <div className="relative h-52 w-full overflow-hidden">
           <img
-            src={dish.imageUrl ?? placeholderImg}
+            src={getImageUrl(dish.imageUrl)}
             alt={dish.name}
             className="w-full h-full object-cover"
           />
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent" />
 
-          {/* Availability badge */}
-          <div className="absolute top-3 right-3">
+          {/* Availability badge — left side so it doesn't overlap the X close button */}
+          <div className="absolute top-3 left-3">
             <Badge
               variant={dish.isAvailable ? 'default' : 'destructive'}
               className="gap-1 text-xs font-semibold"
@@ -329,6 +331,8 @@ function ProductDetailDialog({
             </>
           )}
         </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )

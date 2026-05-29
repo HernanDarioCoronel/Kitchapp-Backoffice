@@ -33,7 +33,7 @@ function DialogButton({
   return (
     <Dialog>
       <DialogTrigger>
-        <Button variant="ghost">{triggerButtonContent}</Button>
+        {triggerButtonContent}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

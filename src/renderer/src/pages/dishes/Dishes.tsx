@@ -8,10 +8,18 @@ import ProductDetailDialog from './components/ProductDetailDialog'
 import { UUID } from 'crypto'
 import DialogButton from '@renderer/components/DialogButton'
 
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api'
+
+function getImageUrl(imageUrl: string | null | undefined): string {
+  if (!imageUrl) return placeholderImg
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
+  return `${API_BASE}/images/${imageUrl}`
+}
+
 function Dishes(): JSX.Element {
   const { data, isLoading, isError, error } = useDishes()
   const { mutate: deleteDish } = useDeleteDish()
-  const [openDialog, setOpenDialog] = useState(false)
+  const [selectedDishId, setSelectedDishId] = useState<UUID | null>(null)
   const { query } = useSearch()
 
   if (isLoading) return <div className="flex justify-center items-center">Cargando...</div>
@@ -20,13 +28,12 @@ function Dishes(): JSX.Element {
   if (data?.length === 0) {
     return <div className="flex justify-center items-center">No hay platos disponibles</div>
   }
-  // Apply search filtering (if any)
   let filtered = data
   if (query && query.trim() !== '') {
     const q = query.toLowerCase()
     filtered = data?.filter((dish) => {
       return (
-        dish.name.toLowerCase().includes(q) ||
+        (dish.name ?? '').toLowerCase().includes(q) ||
         (dish.description ?? '').toLowerCase().includes(q)
       )
     })
@@ -43,9 +50,9 @@ function Dishes(): JSX.Element {
           key={dish.id as UUID}
           className="relative w-72 flex-none border-primary border bg-card"
         >
-          <div className="absolute top-2 right-2 w-fit">
+          <div className="absolute top-4 right-4 w-fit">
             <DialogButton
-              triggerButtonContent={<Trash2 className="text-destructive" />}
+              triggerButtonContent={<Trash2 className="text-destructive" width={20}/>}
               title="Eliminar Plato"
               description="¿Estás seguro de que quieres eliminar este plato?"
               type="destructive"
@@ -59,21 +66,13 @@ function Dishes(): JSX.Element {
           </CardHeader>
           <CardContent>
             <div
-              className="
-              mb-4 h-40 w-full rounded-md bg-center bg-cover flex items-end
-               justify-end p-2 hover:*:brightness-110 transition cursor-pointer"
-              style={{ backgroundImage: `url(${dish.imageUrl ?? placeholderImg})` }}
-              onClick={() => setOpenDialog(true)}
+              className="mb-4 h-40 w-full rounded-md bg-center bg-cover flex items-end justify-end p-2 hover:*:brightness-110 transition cursor-pointer"
+              style={{ backgroundImage: `url(${getImageUrl(dish.imageUrl)})` }}
+              onClick={() => setSelectedDishId(dish.id as UUID)}
             >
-              <ProductDetailDialog
-                productId={dish.id as UUID}
-                open={openDialog}
-                onOpenChange={setOpenDialog}
-              >
-                <button className="bg-primary text-white rounded p-1 ">
-                  <Eye color="var(--foreground)" />
-                </button>
-              </ProductDetailDialog>
+              <button className="bg-primary text-white rounded p-1">
+                <Eye color="var(--foreground)" />
+              </button>
             </div>
             <p className="truncate">{dish.description}</p>
             <div className="flex justify-between items-center mt-4">
@@ -89,6 +88,13 @@ function Dishes(): JSX.Element {
           </CardContent>
         </Card>
       ))}
+      {selectedDishId && (
+        <ProductDetailDialog
+          productId={selectedDishId}
+          open={true}
+          onOpenChange={(open) => { if (!open) setSelectedDishId(null) }}
+        />
+      )}
     </div>
   )
 }

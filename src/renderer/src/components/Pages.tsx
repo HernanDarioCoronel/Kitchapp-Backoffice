@@ -2,6 +2,7 @@ import { useSetTitle } from '@renderer/hooks/use-set-title'
 import Dashboard from '@renderer/pages/dashboard/Dashboard'
 import Dishes from '@renderer/pages/dishes/Dishes'
 import NotFound from '@renderer/pages/notFound'
+import Orders from '@renderer/pages/orders/Orders'
 import Products from '@renderer/pages/products/Products'
 import { JSX, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
@@ -9,7 +10,8 @@ import { Route, Routes, useLocation } from 'react-router'
 const ROUTES: Record<string, string> = {
   '/': 'Dashboard',
   '/dishes': 'Dishes',
-  '/products': 'Products'
+  '/products': 'Products',
+  '/orders': 'Orders'
 }
 
 function Pages(): JSX.Element {
@@ -26,6 +28,7 @@ function Pages(): JSX.Element {
       <Route index path={ROUTES['/']} element={<Dashboard />} />
       <Route path={ROUTES['/dishes']} element={<Dishes />} />
       <Route path={ROUTES['/products']} element={<Products />} />
+      <Route path={ROUTES['/orders']} element={<Orders />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
