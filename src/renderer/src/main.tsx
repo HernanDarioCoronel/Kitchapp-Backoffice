@@ -10,6 +10,7 @@ import { ThemeProvider } from 'next-themes'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContextType } from './pages/login/types/auth'
 import { AuthProvider } from './pages/login/AuthContext'
+import { Toaster } from './components/ui/sonner'
 
 const queryClient = new QueryClient()
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
               {/* @ts-ignore --sidebar-width isn't recognized by TypeScript */}
               <SidebarProvider style={{ '--sidebar-width': '12.5rem' }}>
                 <App />
+                <Toaster />
               </SidebarProvider>
             </AuthProvider>
           </TooltipProvider>
