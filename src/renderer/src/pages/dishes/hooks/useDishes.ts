@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { deleteDishById, fetchDishById, fetchDishes } from '../api/dishes'
+import { createDish, deleteDishById, fetchDishById, fetchDishes, updateDish, DishPayload } from '../api/dishes'
 import type { Dish } from '@api/api'
 import { UUID } from 'crypto'
 
@@ -42,6 +42,35 @@ export function useGetDishById(
   return { data, isLoading, isError, error }
 }
 
+export function useCreateDish(): {
+  mutate: (payload: DishPayload) => void
+  isPending: boolean
+  isError: boolean
+} {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError } = useMutation<Dish, unknown, DishPayload>({
+    mutationFn: createDish,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: dishkeys.all })
+  })
+  return { mutate, isPending, isError }
+}
+
+export function useUpdateDish(): {
+  mutate: (args: { id: UUID; payload: DishPayload }) => void
+  isPending: boolean
+  isError: boolean
+} {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError } = useMutation<Dish, unknown, { id: UUID; payload: DishPayload }>({
+    mutationFn: ({ id, payload }) => updateDish(id, payload),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: dishkeys.all })
+      queryClient.invalidateQueries({ queryKey: dishkeys.details(id) })
+    }
+  })
+  return { mutate, isPending, isError }
+}
+
 export function useDeleteDishById(dishId: UUID): {
   mutate: () => void
   isSuccess: boolean
@@ -63,7 +92,7 @@ export function useDeleteDishById(dishId: UUID): {
 export function useDeleteDish(): {
   mutate: (dishId: UUID) => void
   mutateAsync: (dishId: UUID) => Promise<void>
-  isLoading: boolean
+  isPending: boolean
   isError: boolean
   isSuccess: boolean
 } {

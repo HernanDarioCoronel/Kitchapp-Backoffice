@@ -6,11 +6,11 @@ import {
   fetchProductById,
   fetchProducts,
   fetchUnitTypes,
-  ProductRequestType,
+  ProductPayload,
   updateProduct
 } from '../api/products'
 import { UUID } from 'crypto'
-import { Category, Product, ProductRequest, UnitType } from '@api/index'
+import { Category, Product, UnitType } from '@api/index'
 
 interface UseProductsResult {
   data: Product[] | undefined
@@ -28,11 +28,11 @@ interface UseGetProductByIdResult {
 
 export const productKeys = {
   root: ['products'] as const,
-  list: (type: ProductRequestType) => ['products', type] as const,
+  list: (type) => ['products', type] as const,
   details: (id: UUID) => ['products', id] as const
 }
 
-export function useProducts(type: ProductRequestType): UseProductsResult {
+export function useProducts(type): UseProductsResult {
   const { data, isLoading, isError, error } = useQuery<Product[]>({
     queryKey: productKeys.list(type),
     queryFn: () => fetchProducts(type)
@@ -64,18 +64,18 @@ export function useDeleteProduct(): {
 }
 
 export function useCreateProduct(): {
-  mutate: (payload: ProductRequest) => void
+  mutate: (payload: ProductPayload) => void
   isLoading: boolean
   isError: boolean
   isSuccess: boolean
 } {
   const queryClient = useQueryClient()
-  const { mutate, isPending, isError, isSuccess } = useMutation<Product, unknown, ProductRequest>({
-    mutationFn: (payload: ProductRequest) => createProduct(payload),
+  const { mutate, isPending, isError, isSuccess } = useMutation<Product, unknown, ProductPayload>({
+    mutationFn: (payload: ProductPayload) => createProduct(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
   })
   return {
-    mutate: (payload: ProductRequest) => mutate(payload),
+    mutate: (payload: ProductPayload) => mutate(payload),
     isLoading: isPending,
     isError,
     isSuccess
@@ -83,7 +83,7 @@ export function useCreateProduct(): {
 }
 
 export function useUpdateProduct(): {
-  mutate: (args: { id: UUID; payload: ProductRequest }) => void
+  mutate: (args: { id: UUID; payload: ProductPayload }) => void
   isLoading: boolean
   isError: boolean
   isSuccess: boolean
@@ -92,14 +92,14 @@ export function useUpdateProduct(): {
   const { mutate, isPending, isError, isSuccess } = useMutation<
     Product,
     unknown,
-    { id: UUID; payload: ProductRequest }
+    { id: UUID; payload: ProductPayload }
   >({
-    mutationFn: ({ id, payload }: { id: UUID; payload: ProductRequest }) =>
+    mutationFn: ({ id, payload }: { id: UUID; payload: ProductPayload }) =>
       updateProduct(id, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.root })
   })
   return {
-    mutate: (args: { id: UUID; payload: ProductRequest }) => mutate(args),
+    mutate: (args: { id: UUID; payload: ProductPayload }) => mutate(args),
     isLoading: isPending,
     isError,
     isSuccess

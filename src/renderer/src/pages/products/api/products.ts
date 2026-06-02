@@ -8,6 +8,8 @@ export enum ProductRequestType {
   PRODUCT = 2
 }
 
+export type ProductPayload = ProductRequest & { imageUrl?: string }
+
 export async function fetchProducts(
   type: ProductRequestType = ProductRequestType.ALL
 ): Promise<Product[]> {
@@ -20,12 +22,12 @@ export async function fetchProductById(productId: UUID): Promise<Product> {
   return data
 }
 
-export async function createProduct(payload: ProductRequest): Promise<Product> {
+export async function createProduct(payload: ProductPayload): Promise<Product> {
   const { data } = await apiClient.post<Product>('/products', payload)
   return data
 }
 
-export async function updateProduct(productId: UUID, payload: ProductRequest): Promise<Product> {
+export async function updateProduct(productId: UUID, payload: ProductPayload): Promise<Product> {
   const { data } = await apiClient.patch<Product>(`/products/${productId}`, payload)
   return data
 }

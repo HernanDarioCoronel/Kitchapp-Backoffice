@@ -241,7 +241,7 @@ function ProductDetailDialog({
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  Alérgenos
+                  Allergens
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {uniqueAllergens.map((allergen) => (

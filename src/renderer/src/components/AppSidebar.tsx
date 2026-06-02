@@ -2,6 +2,7 @@ import {
   BadgeEuro,
   BottleWine,
   ChefHat,
+  Database,
   HandPlatter,
   LayoutDashboardIcon,
   LogOut,
@@ -28,6 +29,7 @@ const navData = [
   { title: 'Dishes', url: '/dishes', icon: Utensils },
   { title: 'Products', url: '/products', icon: BottleWine },
   { title: 'Orders', url: '/orders', icon: HandPlatter },
+  { title: 'Masters', url: '/masters', icon: Database },
   { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
   { title: 'TPV', url: '/tpv', icon: BadgeEuro }
 ]

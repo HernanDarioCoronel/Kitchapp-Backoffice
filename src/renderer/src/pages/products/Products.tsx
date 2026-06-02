@@ -36,11 +36,22 @@ import {
   SelectTrigger,
   SelectValue
 } from '@renderer/components/ui/select'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Upload } from 'lucide-react'
+import { Badge } from '@renderer/components/ui/badge'
 import DialogButton from '@renderer/components/DialogButton'
 import { ProductRequestType } from './api/products'
 import { Product, ProductTypeEnum } from '@api/api'
 import { UUID } from 'crypto'
+import placeholderImg from '@resources/placeholder.jpg'
+import { uploadImage } from '@renderer/lib/images'
+
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api'
+
+function getImageUrl(imageUrl: string | null | undefined): string {
+  if (!imageUrl) return placeholderImg
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl
+  return `${API_BASE}/images/${imageUrl}`
+}
 
 interface ProductForm {
   sku: string
@@ -74,6 +85,10 @@ function Products(): JSX.Element {
   const [openForm, setOpenForm] = useState<boolean>(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
+  const [existingImageUrl, setExistingImageUrl] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { query } = useSearch()
 
@@ -89,6 +104,9 @@ function Products(): JSX.Element {
   function openCreate(): void {
     setEditing(null)
     setForm(EMPTY_FORM)
+    setImageFile(null)
+    setImagePreview('')
+    setExistingImageUrl('')
     setOpenForm(true)
   }
 
@@ -103,25 +121,51 @@ function Products(): JSX.Element {
       caloriesPer100g: item.caloriesPer100g != null ? String(item.caloriesPer100g) : '',
       isActive: item.isActive ?? true
     })
+    setImageFile(null)
+    const url = item.imageUrl ? getImageUrl(item.imageUrl) : ''
+    setImagePreview(url)
+    setExistingImageUrl(item.imageUrl ?? '')
     setOpenForm(true)
   }
 
-  function handleSubmit(): void {
-    const payload = {
-      sku: form.sku || undefined,
-      name: form.name || undefined,
-      type: form.type,
-      categoryId: form.categoryId || undefined,
-      unitTypeId: form.unitTypeId || undefined,
-      caloriesPer100g: form.caloriesPer100g ? Number(form.caloriesPer100g) : undefined,
-      isActive: form.isActive
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  async function handleSubmit(): Promise<void> {
+    setIsSubmitting(true)
+    try {
+      let imageUrl: string | undefined = existingImageUrl || undefined
+      if (imageFile) {
+        const res = await uploadImage(imageFile)
+        imageUrl = res.url
+      }
+
+      const payload = {
+        sku: form.sku || undefined,
+        name: form.name || undefined,
+        type: form.type,
+        categoryId: form.categoryId || undefined,
+        unitTypeId: form.unitTypeId || undefined,
+        caloriesPer100g: form.caloriesPer100g ? Number(form.caloriesPer100g) : undefined,
+        imageUrl,
+        isActive: form.isActive
+      }
+
+      if (editing?.id) {
+        updateProduct({ id: editing.id as UUID, payload })
+      } else {
+        createProduct(payload)
+      }
+      setOpenForm(false)
+    } finally {
+      setIsSubmitting(false)
     }
-    if (editing?.id) {
-      updateProduct({ id: editing.id as UUID, payload })
-    } else {
-      createProduct(payload)
-    }
-    setOpenForm(false)
   }
 
   if (isLoading) return <div className="flex justify-center items-center">Cargando...</div>
@@ -235,6 +279,29 @@ function Products(): JSX.Element {
                     placeholder="Calorías por 100g"
                   />
                 </div>
+                <div className="grid gap-1">
+                  <Label>Imagen</Label>
+                  <label className="relative flex items-center justify-center w-full h-28 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden">
+                    {imagePreview ? (
+                      <img
+                        src={imagePreview}
+                        alt="preview"
+                        className="absolute inset-0 h-full w-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                        <Upload className="w-6 h-6" />
+                        <span className="text-xs">Seleccionar imagen</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     id="isActive"
@@ -250,7 +317,9 @@ function Products(): JSX.Element {
                 <DialogClose asChild>
                   <Button variant="ghost">Cancelar</Button>
                 </DialogClose>
-                <Button onClick={handleSubmit}>{editing ? 'Guardar' : 'Crear'}</Button>
+                <Button onClick={() => void handleSubmit()} disabled={isSubmitting}>
+                  {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -260,6 +329,7 @@ function Products(): JSX.Element {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Imagen</TableHead>
             <TableHead>SKU</TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead>Tipo</TableHead>
@@ -272,11 +342,33 @@ function Products(): JSX.Element {
         <TableBody>
           {rows.map((item: Product) => (
             <TableRow key={item.id ?? ''} className="border-b hover:bg-muted/50">
+              <TableCell>
+                <img
+                  src={getImageUrl(item.imageUrl)}
+                  alt={item.name ?? ''}
+                  className="h-10 w-10 rounded object-cover border"
+                />
+              </TableCell>
               <TableCell>{item.sku ?? '-'}</TableCell>
               <TableCell>{item.name}</TableCell>
               <TableCell>{item.type ?? '-'}</TableCell>
               <TableCell>{item.caloriesPer100g ?? '-'}</TableCell>
-              <TableCell>{item.category?.name ?? '-'}</TableCell>
+              <TableCell>
+                {item.category ? (
+                  <Badge
+                    style={{
+                      borderColor: item.category.color,
+                      backgroundColor: `${item.category.color}20`,
+                      color: item.category.color
+                    }}
+                    className="border"
+                  >
+                    {item.category.name}
+                  </Badge>
+                ) : (
+                  '-'
+                )}
+              </TableCell>
               <TableCell>{item.isActive ? 'Sí' : 'No'}</TableCell>
               <TableCell>
                 <div className="flex gap-2">
