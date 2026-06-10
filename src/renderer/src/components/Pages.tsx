@@ -1,6 +1,7 @@
 import { useSetTitle } from '@renderer/hooks/use-set-title'
 import Dashboard from '@renderer/pages/dashboard/Dashboard'
 import Dishes from '@renderer/pages/dishes/Dishes'
+import Kitchen from '@renderer/pages/kitchen/Kitchen'
 import Masters from '@renderer/pages/masters/Masters'
 import NotFound from '@renderer/pages/notFound'
 import Orders from '@renderer/pages/orders/Orders'
@@ -13,7 +14,8 @@ const ROUTES: Record<string, string> = {
   '/dishes': 'Dishes',
   '/products': 'Products',
   '/orders': 'Orders',
-  '/masters': 'Masters'
+  '/masters': 'Masters',
+  '/kitchen': 'Kitchen'
 }
 
 function Pages(): JSX.Element {
@@ -32,6 +34,7 @@ function Pages(): JSX.Element {
       <Route path={ROUTES['/products']} element={<Products />} />
       <Route path={ROUTES['/orders']} element={<Orders />} />
       <Route path={ROUTES['/masters']} element={<Masters />} />
+      <Route path={ROUTES['/kitchen']} element={<Kitchen />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

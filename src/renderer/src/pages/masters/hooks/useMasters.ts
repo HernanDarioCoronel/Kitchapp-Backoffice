@@ -12,6 +12,8 @@ import {
   deleteUnitTypeById,
   fetchAllergens,
   fetchCategories,
+  fetchEmployees,
+  fetchTableOccupations,
   fetchTables,
   fetchTaxes,
   fetchUnitTypes,
@@ -21,7 +23,7 @@ import {
   updateTax,
   updateUnitType
 } from '../api/masters'
-import { Allergen, Category, RestaurantTable, Tax, UnitType } from '@api/index'
+import { Allergen, Category, Employee, RestaurantTable, TableOccupation, Tax, UnitType } from '@api/index'
 
 // ─── Allergens ───────────────────────────────────────────────────────────────
 
@@ -181,6 +183,25 @@ export function useDeleteTax() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: taxKeys.root })
   })
   return { mutate, isLoading: isPending, isError, isSuccess }
+}
+
+// ─── Employees ────────────────────────────────────────────────────────────────
+
+export const employeeKeys = { root: ['employees'] as const }
+
+export function useEmployees() {
+  return useQuery<Employee[]>({ queryKey: employeeKeys.root, queryFn: fetchEmployees })
+}
+
+// ─── Table Occupations ────────────────────────────────────────────────────────
+
+export const tableOccupationKeys = { root: ['table-occupations'] as const }
+
+export function useTableOccupations() {
+  return useQuery<TableOccupation[]>({
+    queryKey: tableOccupationKeys.root,
+    queryFn: fetchTableOccupations
+  })
 }
 
 // ─── Unit Types ───────────────────────────────────────────────────────────────

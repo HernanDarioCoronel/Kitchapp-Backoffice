@@ -2,16 +2,24 @@ import { UUID } from 'crypto'
 import DishCard from './DishCard'
 import ProductCard from './ProductCard'
 import { Button } from '@renderer/components/ui/button'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, Trash } from 'lucide-react'
 import { useDishes } from '@renderer/pages/dishes/hooks/useDishes'
 import { useProducts } from '@renderer/pages/products/hooks/useProducts'
 import { ProductRequestType } from '@renderer/pages/products/api/products'
 import { useCreateOrder } from '../hooks/useOrders'
+import { useEmployees, useTableOccupations } from '@renderer/pages/masters/hooks/useMasters'
 import { toast } from 'sonner'
 import { JSX, useState } from 'react'
 import { useSearch } from '@renderer/components/SearchContext'
 import { FilterMode } from '../orderTypes'
-import { OrderStatusEnum } from '@api/api'
+import { TableOccupationStatusEnum } from '@api/api'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
 
 function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Element {
   const { data: dishes, isLoading: dishesLoading, isError: dishesError } = useDishes()
@@ -20,10 +28,15 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
     isLoading: productsLoading,
     isError: productsError
   } = useProducts(ProductRequestType.PRODUCT)
+  const { data: employees, isLoading: employeesLoading } = useEmployees()
+  const { data: tableOccupations, isLoading: occupationsLoading } = useTableOccupations()
   const { mutateAsync: createOrder, isPending } = useCreateOrder()
+
   const [cartDishes, setCartDishes] = useState<Map<string, number>>(new Map())
   const [cartProducts, setCartProducts] = useState<Map<string, number>>(new Map())
   const [filter, setFilter] = useState<FilterMode>('all')
+  const [selectedTableOccupationId, setSelectedTableOccupationId] = useState<string>('')
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
   const { query } = useSearch()
 
   function incrementDish(id: string): void {
@@ -55,13 +68,36 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
   }
 
   async function handleSendOrder(): Promise<void> {
-    const orderDishes = [...cartDishes.entries()].map(([id, count]) => ({ dish: { id }, count }))
-    const orderConsumableItems = [...cartProducts.entries()].map(([id, count]) => ({
-      product: { id },
-      count
+    if (!selectedTableOccupationId) {
+      toast.error('Selecciona una mesa')
+      return
+    }
+    if (!selectedEmployeeId) {
+      toast.error('Selecciona un empleado')
+      return
+    }
+
+    const allDishesMap = new Map((dishes ?? []).map((d) => [d.id as string, d]))
+
+    const orderDishes = [...cartDishes.entries()].map(([id, count]) => ({
+      dishId: id,
+      count,
+      total: (allDishesMap.get(id)?.price ?? 0) * count
     }))
+
+    const orderConsumables = [...cartProducts.entries()].map(([id, count]) => ({
+      productId: id,
+      count,
+      total: count
+    }))
+
     try {
-      await createOrder({ status: OrderStatusEnum.Waiting, orderDishes, orderConsumableItems })
+      await createOrder({
+        tableOccupationId: selectedTableOccupationId,
+        employeeId: selectedEmployeeId,
+        orderDishes,
+        orderConsumables
+      })
       setCartDishes(new Map())
       setCartProducts(new Map())
       toast.success('Orden enviada correctamente')
@@ -71,13 +107,19 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
     }
   }
 
-  if (dishesLoading || productsLoading)
+  if (dishesLoading || productsLoading || employeesLoading || occupationsLoading)
     return <div className="flex justify-center items-center h-full">Cargando...</div>
   if (dishesError || productsError)
     return <div className="flex justify-center items-center h-full">Error al cargar los datos</div>
 
   const allDishes = dishes ?? []
   const allProducts = products ?? []
+  const allEmployees = (employees ?? []).filter((e) => e.isActive)
+  const openOccupations = (tableOccupations ?? []).filter(
+    (o) =>
+      o.status === TableOccupationStatusEnum.Open || o.status === TableOccupationStatusEnum.Occupied
+  )
+
   const totalSelected =
     [...cartDishes.values()].reduce((a, b) => a + b, 0) +
     [...cartProducts.values()].reduce((a, b) => a + b, 0)
@@ -114,39 +156,96 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
 
   const isEmpty = filteredDishes.length === 0 && filteredProducts.length === 0
 
+  const canSend = totalSelected > 0 && !!selectedTableOccupationId && !!selectedEmployeeId
+
   return (
     <div className="flex flex-col h-full overflow-y-auto">
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 bg-background border-b gap-4">
-        <div className="flex items-center gap-3">
-          <ShoppingCart size={20} />
-          <span className="font-bold text-xl">${total.toFixed(2)}</span>
-          <span className="text-muted-foreground text-sm">
-            {totalSelected} {totalSelected === 1 ? 'ítem' : 'ítems'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1 rounded-md border p-1">
-            {(
-              [
-                ['all', 'Todos'],
-                ['dishes', 'Platos'],
-                ['products', 'Productos'],
-                ['selected', 'Seleccionados']
-              ] as [FilterMode, string][]
-            ).map(([mode, label]) => (
-              <Button
-                key={mode}
-                variant={filter === mode ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFilter(mode)}
-              >
-                {label}
-              </Button>
-            ))}
+      <div className="sticky top-0 z-10 flex flex-col gap-2 px-4 py-3 bg-background border-b">
+        {/* Row 1: cart summary + filters + send */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <ShoppingCart size={20} />
+            <span className="font-bold text-xl">${total.toFixed(2)}</span>
+            <span className="text-muted-foreground text-sm">
+              {totalSelected} {totalSelected === 1 ? 'ítem' : 'ítems'}
+            </span>
           </div>
-          <Button onClick={handleSendOrder} disabled={totalSelected === 0 || isPending}>
-            {isPending ? 'Enviando...' : 'Enviar orden'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1 rounded-md border p-1">
+              {(
+                [
+                  ['all', 'Todos'],
+                  ['dishes', 'Platos'],
+                  ['products', 'Productos'],
+                  ['selected', 'Seleccionados']
+                ] as [FilterMode, string][]
+              ).map(([mode, label]) => (
+                <Button
+                  key={mode}
+                  variant={filter === mode ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setFilter(mode)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <Button onClick={handleSendOrder} disabled={!canSend || isPending}>
+              {isPending ? 'Enviando...' : 'Enviar orden'}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                setCartDishes(new Map())
+                setCartProducts(new Map())
+              }}
+              disabled={totalSelected === 0}
+            >
+              <Trash size={16} />
+            </Button>
+          </div>
+        </div>
+
+        {/* Row 2: mesa + empleado */}
+        <div className="flex items-center gap-3">
+          <Select value={selectedTableOccupationId} onValueChange={setSelectedTableOccupationId}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Mesa" />
+            </SelectTrigger>
+            <SelectContent>
+              {openOccupations.length === 0 ? (
+                <SelectItem value="__none" disabled>
+                  Sin mesas abiertas
+                </SelectItem>
+              ) : (
+                openOccupations.map((o) => (
+                  <SelectItem key={o.id as string} value={o.id as string}>
+                    Mesa {o.table?.tableNumber ?? '—'}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Empleado" />
+            </SelectTrigger>
+            <SelectContent>
+              {allEmployees.length === 0 ? (
+                <SelectItem value="__none" disabled>
+                  Sin empleados
+                </SelectItem>
+              ) : (
+                allEmployees.map((e) => (
+                  <SelectItem key={e.id as string} value={e.id as string}>
+                    {e.fullName ?? '—'}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

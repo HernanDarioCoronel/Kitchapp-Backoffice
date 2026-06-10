@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import { Allergen, Category, RestaurantTable, Tax, UnitType } from '@api/api'
+import { Allergen, Category, Employee, RestaurantTable, TableOccupation, Tax, UnitType } from '@api/api'
 
 // Allergens
 export async function fetchAllergens(): Promise<Allergen[]> {
@@ -67,6 +67,18 @@ export async function updateTax(id: string, payload: Tax): Promise<Tax> {
 }
 export async function deleteTaxById(id: string): Promise<void> {
   await apiClient.delete(`/taxes/${id}`)
+}
+
+// Employees
+export async function fetchEmployees(): Promise<Employee[]> {
+  const { data } = await apiClient.get<Employee[]>('/employees')
+  return data
+}
+
+// Table Occupations
+export async function fetchTableOccupations(): Promise<TableOccupation[]> {
+  const { data } = await apiClient.get<TableOccupation[]>('/table-occupations')
+  return data
 }
 
 // Unit Types

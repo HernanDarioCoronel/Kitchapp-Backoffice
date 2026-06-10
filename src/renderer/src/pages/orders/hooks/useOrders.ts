@@ -3,10 +3,12 @@ import {
   fetchOrders,
   createOrder,
   updateOrder,
+  updateOrderDish,
   CreateOrderPayload,
-  UpdateOrderPayload
+  UpdateOrderPayload,
+  UpdateOrderDishPayload
 } from '../api/orders'
-import type { Order } from '@api/api'
+import type { Order, OrderDish } from '@api/api'
 
 export const orderKeys = {
   all: ['orders'] as const
@@ -56,6 +58,28 @@ export function useUpdateOrder(): {
     { id: string; payload: UpdateOrderPayload }
   >({
     mutationFn: ({ id, payload }) => updateOrder(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: orderKeys.all })
+  })
+  return { mutate, mutateAsync, isPending, isError }
+}
+
+export function useUpdateOrderDish(): {
+  mutate: (args: { orderId: string; dishId: string; payload: UpdateOrderDishPayload }) => void
+  mutateAsync: (args: {
+    orderId: string
+    dishId: string
+    payload: UpdateOrderDishPayload
+  }) => Promise<OrderDish>
+  isPending: boolean
+  isError: boolean
+} {
+  const queryClient = useQueryClient()
+  const { mutate, mutateAsync, isPending, isError } = useMutation<
+    OrderDish,
+    unknown,
+    { orderId: string; dishId: string; payload: UpdateOrderDishPayload }
+  >({
+    mutationFn: ({ orderId, dishId, payload }) => updateOrderDish(orderId, dishId, payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: orderKeys.all })
   })
   return { mutate, mutateAsync, isPending, isError }
