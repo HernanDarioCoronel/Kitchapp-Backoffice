@@ -7,12 +7,11 @@ import { useDishes } from '@renderer/pages/dishes/hooks/useDishes'
 import { useProducts } from '@renderer/pages/products/hooks/useProducts'
 import { ProductRequestType } from '@renderer/pages/products/api/products'
 import { useCreateOrder } from '../hooks/useOrders'
-import { useEmployees, useTableOccupations } from '@renderer/pages/masters/hooks/useMasters'
+import { useEmployees } from '@renderer/pages/masters/hooks/useMasters'
 import { toast } from 'sonner'
-import { JSX, useState } from 'react'
+import { JSX, useEffect, useState } from 'react'
 import { useSearch } from '@renderer/components/SearchContext'
 import { FilterMode } from '../orderTypes'
-import { TableOccupationStatusEnum } from '@api/api'
 import {
   Select,
   SelectContent,
@@ -21,7 +20,12 @@ import {
   SelectValue
 } from '@renderer/components/ui/select'
 
-function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Element {
+interface NewOrderViewProps {
+  onOrderSent?: () => void
+  tableOccupationId: string
+}
+
+function NewOrderView({ onOrderSent, tableOccupationId }: NewOrderViewProps): JSX.Element {
   const { data: dishes, isLoading: dishesLoading, isError: dishesError } = useDishes()
   const {
     data: products,
@@ -29,15 +33,30 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
     isError: productsError
   } = useProducts(ProductRequestType.PRODUCT)
   const { data: employees, isLoading: employeesLoading } = useEmployees()
-  const { data: tableOccupations, isLoading: occupationsLoading } = useTableOccupations()
   const { mutateAsync: createOrder, isPending } = useCreateOrder()
 
   const [cartDishes, setCartDishes] = useState<Map<string, number>>(new Map())
   const [cartProducts, setCartProducts] = useState<Map<string, number>>(new Map())
   const [filter, setFilter] = useState<FilterMode>('all')
-  const [selectedTableOccupationId, setSelectedTableOccupationId] = useState<string>('')
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('')
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>(
+    () => localStorage.getItem('lastEmployeeId') ?? ''
+  )
   const { query } = useSearch()
+
+  const allEmployees = (employees ?? []).filter((e) => e.isActive)
+
+  // Validate stored employee ID when list loads
+  useEffect(() => {
+    if (allEmployees.length > 0 && selectedEmployeeId) {
+      const found = allEmployees.some((e) => e.id === selectedEmployeeId)
+      if (!found) setSelectedEmployeeId('')
+    }
+  }, [allEmployees.length])
+
+  function handleEmployeeChange(id: string): void {
+    setSelectedEmployeeId(id)
+    localStorage.setItem('lastEmployeeId', id)
+  }
 
   function incrementDish(id: string): void {
     setCartDishes((prev) => new Map(prev).set(id, (prev.get(id) ?? 0) + 1))
@@ -68,10 +87,6 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
   }
 
   async function handleSendOrder(): Promise<void> {
-    if (!selectedTableOccupationId) {
-      toast.error('Selecciona una mesa')
-      return
-    }
     if (!selectedEmployeeId) {
       toast.error('Selecciona un empleado')
       return
@@ -93,7 +108,7 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
 
     try {
       await createOrder({
-        tableOccupationId: selectedTableOccupationId,
+        tableOccupationId,
         employeeId: selectedEmployeeId,
         orderDishes,
         orderConsumables
@@ -107,18 +122,13 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
     }
   }
 
-  if (dishesLoading || productsLoading || employeesLoading || occupationsLoading)
+  if (dishesLoading || productsLoading || employeesLoading)
     return <div className="flex justify-center items-center h-full">Cargando...</div>
   if (dishesError || productsError)
     return <div className="flex justify-center items-center h-full">Error al cargar los datos</div>
 
   const allDishes = dishes ?? []
   const allProducts = products ?? []
-  const allEmployees = (employees ?? []).filter((e) => e.isActive)
-  const openOccupations = (tableOccupations ?? []).filter(
-    (o) =>
-      o.status === TableOccupationStatusEnum.Open || o.status === TableOccupationStatusEnum.Occupied
-  )
 
   const totalSelected =
     [...cartDishes.values()].reduce((a, b) => a + b, 0) +
@@ -156,7 +166,7 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
 
   const isEmpty = filteredDishes.length === 0 && filteredProducts.length === 0
 
-  const canSend = totalSelected > 0 && !!selectedTableOccupationId && !!selectedEmployeeId
+  const canSend = totalSelected > 0 && !!selectedEmployeeId
 
   return (
     <div className="flex flex-col h-full overflow-y-auto">
@@ -207,28 +217,9 @@ function NewOrderView({ onOrderSent }: { onOrderSent?: () => void }): JSX.Elemen
           </div>
         </div>
 
-        {/* Row 2: mesa + empleado */}
+        {/* Row 2: empleado */}
         <div className="flex items-center gap-3">
-          <Select value={selectedTableOccupationId} onValueChange={setSelectedTableOccupationId}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="Mesa" />
-            </SelectTrigger>
-            <SelectContent>
-              {openOccupations.length === 0 ? (
-                <SelectItem value="__none" disabled>
-                  Sin mesas abiertas
-                </SelectItem>
-              ) : (
-                openOccupations.map((o) => (
-                  <SelectItem key={o.id as string} value={o.id as string}>
-                    Mesa {o.table?.tableNumber ?? '—'}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
+          <Select value={selectedEmployeeId} onValueChange={handleEmployeeChange}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Empleado" />
             </SelectTrigger>

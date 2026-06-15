@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api-client'
-import { OrderDishStatusEnum, OrderStatusEnum } from '@api/api'
-import type { Order, OrderDish } from '@api/api'
+import { OrderDishStatusEnum, OrderStatusEnum, TableOccupationStatusEnum } from '@api/api'
+import type { Order, OrderDish, TableOccupation } from '@api/api'
 
 export interface CreateOrderDishPayload {
   dishId: string
@@ -29,6 +29,30 @@ export interface UpdateOrderDishPayload {
   status: OrderDishStatusEnum
 }
 
+export interface CreateTableOccupationPayload {
+  table: { id: string }
+  status: TableOccupationStatusEnum
+  startedAt?: string
+}
+
+export async function createTableOccupation(
+  payload: CreateTableOccupationPayload
+): Promise<TableOccupation> {
+  const { data } = await apiClient.post<TableOccupation>('/table-occupations', {
+    id: crypto.randomUUID(),
+    ...payload
+  })
+  return data
+}
+
+export async function closeTableOccupation(id: string): Promise<TableOccupation> {
+  const { data } = await apiClient.patch<TableOccupation>(`/table-occupations/${id}`, {
+    status: TableOccupationStatusEnum.Closed,
+    endedAt: new Date().toISOString()
+  })
+  return data
+}
+
 // kept for backwards-compat with any existing callers
 export type OrderDishPayload = CreateOrderDishPayload
 export type OrderConsumableItemPayload = CreateOrderConsumablePayload
@@ -39,7 +63,10 @@ export async function fetchOrders(): Promise<Order[]> {
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
-  const { data } = await apiClient.post<Order>('/orders', payload)
+  const { data } = await apiClient.post<Order>('/orders', {
+    id: crypto.randomUUID(),
+    ...payload
+  })
   return data
 }
 

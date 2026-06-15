@@ -37,24 +37,20 @@ import {
   useCategoriesMasters,
   useCreateAllergen,
   useCreateCategory,
-  useCreateTable,
   useCreateTax,
   useCreateUnitType,
   useDeleteAllergen,
   useDeleteCategory,
-  useDeleteTable,
   useDeleteTax,
   useDeleteUnitType,
-  useTables,
   useTaxes,
   useUnitTypesMasters,
   useUpdateAllergen,
   useUpdateCategory,
-  useUpdateTable,
   useUpdateTax,
   useUpdateUnitType
 } from './hooks/useMasters'
-import { Allergen, Category, CategoryTypeEnum, RestaurantTable, Tax, UnitType } from '@api/api'
+import { Allergen, Category, CategoryTypeEnum, Tax, UnitType } from '@api/api'
 
 // ─── Allergens ───────────────────────────────────────────────────────────────
 
@@ -377,149 +373,6 @@ function CategorySection(): JSX.Element {
   )
 }
 
-// ─── Tables ───────────────────────────────────────────────────────────────────
-
-interface TableForm {
-  tableNumber: string
-  capacity: string
-  isActive: boolean
-}
-
-const EMPTY_TABLE: TableForm = { tableNumber: '', capacity: '', isActive: true }
-
-function TableSection(): JSX.Element {
-  const { data } = useTables()
-  const { mutate: create } = useCreateTable()
-  const { mutate: update } = useUpdateTable()
-  const { mutate: remove } = useDeleteTable()
-  const { query } = useSearch()
-
-  const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<RestaurantTable | null>(null)
-  const [form, setForm] = useState<TableForm>(EMPTY_TABLE)
-
-  const rows = useMemo(() => {
-    const base = data ?? []
-    if (!query.trim()) return base
-    const q = query.toLowerCase()
-    return base.filter((t) => String(t.tableNumber ?? '').includes(q))
-  }, [data, query])
-
-  function openCreate(): void {
-    setEditing(null)
-    setForm(EMPTY_TABLE)
-    setOpen(true)
-  }
-
-  function openEdit(item: RestaurantTable): void {
-    setEditing(item)
-    setForm({
-      tableNumber: item.tableNumber != null ? String(item.tableNumber) : '',
-      capacity: item.capacity != null ? String(item.capacity) : '',
-      isActive: item.isActive ?? true
-    })
-    setOpen(true)
-  }
-
-  function handleSubmit(): void {
-    const payload: RestaurantTable = {
-      tableNumber: form.tableNumber ? Number(form.tableNumber) : undefined,
-      capacity: form.capacity ? Number(form.capacity) : undefined,
-      isActive: form.isActive
-    }
-    if (editing?.id) {
-      update({ id: editing.id, payload })
-    } else {
-      create(payload)
-    }
-    setOpen(false)
-  }
-
-  return (
-    <Section
-      title="Tables"
-      onAdd={openCreate}
-      dialog={
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate} className="flex items-center gap-2">
-              <Plus /> Agregar
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editing ? 'Editar mesa' : 'Nueva mesa'}</DialogTitle>
-              <DialogDescription>Datos de la mesa</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3 py-2">
-              <div className="grid gap-1">
-                <Label>Número de mesa</Label>
-                <Input
-                  type="number"
-                  value={form.tableNumber}
-                  onChange={(e) => setForm((s) => ({ ...s, tableNumber: e.target.value }))}
-                  placeholder="Número"
-                />
-              </div>
-              <div className="grid gap-1">
-                <Label>Capacidad</Label>
-                <Input
-                  type="number"
-                  value={form.capacity}
-                  onChange={(e) => setForm((s) => ({ ...s, capacity: e.target.value }))}
-                  placeholder="Capacidad"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="table-active"
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.checked }))}
-                  className="h-4 w-4 rounded border-input"
-                />
-                <Label htmlFor="table-active">Activa</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="ghost">Cancelar</Button>
-              </DialogClose>
-              <Button onClick={handleSubmit}>{editing ? 'Guardar' : 'Crear'}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      }
-    >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>N.º</TableHead>
-            <TableHead>Capacidad</TableHead>
-            <TableHead>Activa</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((item) => (
-            <TableRow key={item.id} className="hover:bg-muted/50">
-              <TableCell>{item.tableNumber ?? '-'}</TableCell>
-              <TableCell>{item.capacity ?? '-'}</TableCell>
-              <TableCell>{item.isActive ? 'Sí' : 'No'}</TableCell>
-              <TableCell>
-                <RowActions
-                  onEdit={() => openEdit(item)}
-                  onDelete={() => item.id && remove(item.id)}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Section>
-  )
-}
-
 // ─── Taxes ────────────────────────────────────────────────────────────────────
 
 interface TaxForm {
@@ -826,7 +679,6 @@ function Masters(): JSX.Element {
         <TabsList>
           <TabsTrigger value="allergens">Allergens</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="tables">Tables</TabsTrigger>
           <TabsTrigger value="taxes">Taxes</TabsTrigger>
           <TabsTrigger value="unit-types">Units</TabsTrigger>
         </TabsList>
@@ -835,9 +687,6 @@ function Masters(): JSX.Element {
         </TabsContent>
         <TabsContent value="categories">
           <CategorySection />
-        </TabsContent>
-        <TabsContent value="tables">
-          <TableSection />
         </TabsContent>
         <TabsContent value="taxes">
           <TaxSection />

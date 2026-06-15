@@ -6,6 +6,7 @@ import {
   HandPlatter,
   LayoutDashboardIcon,
   LogOut,
+  Map,
   Utensils
 } from 'lucide-react'
 import { JSX, useState } from 'react'
@@ -31,6 +32,7 @@ const navData = [
   { title: 'Orders', url: '/orders', icon: HandPlatter },
   { title: 'Masters', url: '/masters', icon: Database },
   { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
+  { title: 'Table Map', url: '/table-map', icon: Map },
   { title: 'TPV', url: '/tpv', icon: BadgeEuro }
 ]
 

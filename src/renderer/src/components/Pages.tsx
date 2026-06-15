@@ -6,6 +6,7 @@ import Masters from '@renderer/pages/masters/Masters'
 import NotFound from '@renderer/pages/notFound'
 import Orders from '@renderer/pages/orders/Orders'
 import Products from '@renderer/pages/products/Products'
+import TableMap from '@renderer/pages/table-map/TableMap'
 import { JSX, useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 
@@ -15,7 +16,8 @@ const ROUTES: Record<string, string> = {
   '/products': 'Products',
   '/orders': 'Orders',
   '/masters': 'Masters',
-  '/kitchen': 'Kitchen'
+  '/kitchen': 'Kitchen',
+  '/table-map': 'Table Map'
 }
 
 function Pages(): JSX.Element {
@@ -35,6 +37,7 @@ function Pages(): JSX.Element {
       <Route path={ROUTES['/orders']} element={<Orders />} />
       <Route path={ROUTES['/masters']} element={<Masters />} />
       <Route path={ROUTES['/kitchen']} element={<Kitchen />} />
+      <Route path="/table-map" element={<TableMap />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

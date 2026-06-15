@@ -2,28 +2,32 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createAllergen,
   createCategory,
+  createLayer,
   createTable,
   createTax,
   createUnitType,
   deleteAllergenById,
   deleteCategoryById,
+  deleteLayerById,
   deleteTableById,
   deleteTaxById,
   deleteUnitTypeById,
   fetchAllergens,
   fetchCategories,
   fetchEmployees,
+  fetchLayers,
   fetchTableOccupations,
   fetchTables,
   fetchTaxes,
   fetchUnitTypes,
   updateAllergen,
   updateCategory,
+  updateLayer,
   updateTable,
   updateTax,
   updateUnitType
 } from '../api/masters'
-import { Allergen, Category, Employee, RestaurantTable, TableOccupation, Tax, UnitType } from '@api/index'
+import { Allergen, Category, Employee, Layer, RestaurantTable, TableOccupation, Tax, UnitType } from '@api/index'
 
 // ─── Allergens ───────────────────────────────────────────────────────────────
 
@@ -202,6 +206,45 @@ export function useTableOccupations() {
     queryKey: tableOccupationKeys.root,
     queryFn: fetchTableOccupations
   })
+}
+
+// ─── Layers ───────────────────────────────────────────────────────────────────
+
+export const layerKeys = { root: ['layers'] as const }
+
+export function useLayers() {
+  return useQuery<Layer[]>({ queryKey: layerKeys.root, queryFn: fetchLayers })
+}
+
+export function useCreateLayer() {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError, isSuccess } = useMutation<Layer, unknown, Layer>({
+    mutationFn: createLayer,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: layerKeys.root })
+  })
+  return { mutate, isLoading: isPending, isError, isSuccess }
+}
+
+export function useUpdateLayer() {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError, isSuccess } = useMutation<
+    Layer,
+    unknown,
+    { id: string; payload: Layer }
+  >({
+    mutationFn: ({ id, payload }) => updateLayer(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: layerKeys.root })
+  })
+  return { mutate, isLoading: isPending, isError, isSuccess }
+}
+
+export function useDeleteLayer() {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError, isSuccess } = useMutation<void, unknown, string>({
+    mutationFn: deleteLayerById,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: layerKeys.root })
+  })
+  return { mutate, isLoading: isPending, isError, isSuccess }
 }
 
 // ─── Unit Types ───────────────────────────────────────────────────────────────

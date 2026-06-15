@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client'
-import { Allergen, Category, Employee, RestaurantTable, TableOccupation, Tax, UnitType } from '@api/api'
+import { Allergen, Category, Employee, Layer, RestaurantTable, TableOccupation, Tax, UnitType } from '@api/api'
 
 // Allergens
 export async function fetchAllergens(): Promise<Allergen[]> {
@@ -41,7 +41,10 @@ export async function fetchTables(): Promise<RestaurantTable[]> {
   return data
 }
 export async function createTable(payload: RestaurantTable): Promise<RestaurantTable> {
-  const { data } = await apiClient.post<RestaurantTable>('/tables', payload)
+  const { data } = await apiClient.post<RestaurantTable>('/tables', {
+    id: crypto.randomUUID(),
+    ...payload
+  })
   return data
 }
 export async function updateTable(id: string, payload: RestaurantTable): Promise<RestaurantTable> {
@@ -79,6 +82,26 @@ export async function fetchEmployees(): Promise<Employee[]> {
 export async function fetchTableOccupations(): Promise<TableOccupation[]> {
   const { data } = await apiClient.get<TableOccupation[]>('/table-occupations')
   return data
+}
+
+// Layers
+export async function fetchLayers(): Promise<Layer[]> {
+  const { data } = await apiClient.get<Layer[]>('/layers')
+  return data
+}
+export async function createLayer(payload: Layer): Promise<Layer> {
+  const { data } = await apiClient.post<Layer>('/layers', {
+    id: crypto.randomUUID(),
+    ...payload
+  })
+  return data
+}
+export async function updateLayer(id: string, payload: Layer): Promise<Layer> {
+  const { data } = await apiClient.patch<Layer>(`/layers/${id}`, payload)
+  return data
+}
+export async function deleteLayerById(id: string): Promise<void> {
+  await apiClient.delete(`/layers/${id}`)
 }
 
 // Unit Types

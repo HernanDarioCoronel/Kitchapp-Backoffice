@@ -3,6 +3,7 @@ import { OrderStatusEnum } from '@api/api'
 export type StatusFilter = OrderStatusEnum | 'active' | 'all'
 export type ViewMode = 'new-order' | 'list'
 export type FilterMode = 'all' | 'dishes' | 'products' | 'selected'
+export type OrdersView = 'map' | 'new-order' | 'orders-list'
 
 export const STATUS_LABELS: Record<OrderStatusEnum, string> = {
   [OrderStatusEnum.Waiting]: 'En espera',

@@ -1,4 +1,4 @@
-.PHONY: help backend-up backend-down backend-rebuild backend-logs backend-clean backend-ps types models generate-api lint lint-fix
+.PHONY: help backend-up backend-down backend-rebuild backend-logs backend-clean backend-ps types models types lint lint-fix
 
 include .env
 
@@ -29,7 +29,7 @@ backend-clean: ## Limpia contenedores y volúmenes del backend
 backend-ps: ## Estado de los servicios del backend
 	cd $(BACKEND_DIR) && make ps
 
-generate-api:  ## Genera los tipos y modelos de la API
+types:  ## Genera los tipos y modelos de la API
 	npx openapi-typescript $(SWAGGER_URL) -o src/api/types.ts
 	npx @openapitools/openapi-generator-cli generate -i $(SWAGGER_URL) -g typescript-axios -o src/api
 

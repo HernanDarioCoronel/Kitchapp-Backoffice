@@ -34,7 +34,6 @@ import {
   Tag,
   Layers,
   AlertTriangle,
-  ShoppingBasket,
   CalendarDays,
   Flame,
   DollarSign

@@ -13,7 +13,7 @@ import { useOrders, useUpdateOrder } from '../hooks/useOrders'
 import { STATUS_LABELS, type StatusFilter } from '../orderTypes'
 import { toast } from 'sonner'
 
-function OrdersListView(): JSX.Element {
+function OrdersListView({ tableOccupationId }: { tableOccupationId?: string }): JSX.Element {
   const { data: orders, isLoading, isError } = useOrders()
   const { mutateAsync: updateOrder } = useUpdateOrder()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active')
@@ -34,7 +34,9 @@ function OrdersListView(): JSX.Element {
       <div className="flex justify-center items-center h-full">Error al cargar las órdenes</div>
     )
 
-  const allOrders = orders ?? []
+  const allOrders = tableOccupationId
+    ? (orders ?? []).filter((o) => o.tableOccupation?.id === tableOccupationId)
+    : (orders ?? [])
 
   const filteredOrders = allOrders.filter((o) => {
     if (statusFilter === 'all') return true
