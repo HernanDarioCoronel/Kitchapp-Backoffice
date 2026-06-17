@@ -103,7 +103,7 @@ function AllergenSection(): JSX.Element {
 
   return (
     <Section
-      title="Allergens"
+      title="Alérgenos"
       onAdd={openCreate}
       dialog={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -119,19 +119,19 @@ function AllergenSection(): JSX.Element {
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="grid gap-1">
-                <Label>Name</Label>
+                <Label>Nombre</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-                  placeholder="Name"
+                  placeholder="Nombre"
                 />
               </div>
               <div className="grid gap-1">
-                <Label>Description</Label>
+                <Label>Descripción</Label>
                 <Input
                   value={form.description}
                   onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
-                  placeholder="Description"
+                  placeholder="Descripción"
                 />
               </div>
             </div>
@@ -148,9 +148,9 @@ function AllergenSection(): JSX.Element {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Descripción</TableHead>
+            <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -250,7 +250,7 @@ function CategorySection(): JSX.Element {
 
   return (
     <Section
-      title="Categories"
+      title="Categorías"
       onAdd={openCreate}
       dialog={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -266,19 +266,19 @@ function CategorySection(): JSX.Element {
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="grid gap-1">
-                <Label>Name</Label>
+                <Label>Nombre</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-                  placeholder="Name"
+                  placeholder="Nombre"
                 />
               </div>
               <div className="grid gap-1">
-                <Label>Description</Label>
+                <Label>Descripción</Label>
                 <Input
                   value={form.description}
                   onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
-                  placeholder="Description"
+                  placeholder="Descripción"
                 />
               </div>
               <div className="grid gap-1">
@@ -331,11 +331,11 @@ function CategorySection(): JSX.Element {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
+            <TableHead>Nombre</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Activa</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Descripción</TableHead>
+            <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -427,7 +427,7 @@ function TaxSection(): JSX.Element {
 
   return (
     <Section
-      title="Taxes"
+      title="Impuestos"
       onAdd={openCreate}
       dialog={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -443,11 +443,11 @@ function TaxSection(): JSX.Element {
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="grid gap-1">
-                <Label>Name</Label>
+                <Label>Nombre</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-                  placeholder="Name"
+                  placeholder="Nombre"
                 />
               </div>
               <div className="grid gap-1">
@@ -473,9 +473,9 @@ function TaxSection(): JSX.Element {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
+            <TableHead>Nombre</TableHead>
             <TableHead>Valor (%)</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -552,7 +552,7 @@ function UnitTypeSection(): JSX.Element {
 
   return (
     <Section
-      title="Units de medida"
+      title="Unidades de medida"
       onAdd={openCreate}
       dialog={
         <Dialog open={open} onOpenChange={setOpen}>
@@ -568,11 +568,11 @@ function UnitTypeSection(): JSX.Element {
             </DialogHeader>
             <div className="grid gap-3 py-2">
               <div className="grid gap-1">
-                <Label>Name</Label>
+                <Label>Nombre</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
-                  placeholder="Name"
+                  placeholder="Nombre"
                 />
               </div>
               <div className="grid gap-1">
@@ -597,9 +597,9 @@ function UnitTypeSection(): JSX.Element {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
+            <TableHead>Nombre</TableHead>
             <TableHead>Abreviatura</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -674,13 +674,13 @@ function RowActions({
 function Masters(): JSX.Element {
   return (
     <div className="h-full flex flex-col gap-4 m-4">
-      <h1 className="text-2xl font-bold">Masters</h1>
+      <h1 className="text-2xl font-bold">Maestros</h1>
       <Tabs defaultValue="allergens">
         <TabsList>
-          <TabsTrigger value="allergens">Allergens</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="taxes">Taxes</TabsTrigger>
-          <TabsTrigger value="unit-types">Units</TabsTrigger>
+          <TabsTrigger value="allergens">Alérgenos</TabsTrigger>
+          <TabsTrigger value="categories">Categorías</TabsTrigger>
+          <TabsTrigger value="taxes">Impuestos</TabsTrigger>
+          <TabsTrigger value="unit-types">Unidades</TabsTrigger>
         </TabsList>
         <TabsContent value="allergens">
           <AllergenSection />

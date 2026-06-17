@@ -31,17 +31,17 @@ import {
 import { useAuth } from '@renderer/pages/login/hooks/useAuth'
 
 const navData = [
-  { title: 'Dashboard', url: '/', icon: LayoutDashboardIcon },
-  { title: 'Dishes', url: '/dishes', icon: Utensils },
-  { title: 'Products', url: '/products', icon: BottleWine },
-  { title: 'Orders', url: '/orders', icon: HandPlatter },
-  { title: 'Masters', url: '/masters', icon: Database },
+  { title: 'Panel de control', url: '/', icon: LayoutDashboardIcon },
+  { title: 'Platos', url: '/dishes', icon: Utensils },
+  { title: 'Productos', url: '/products', icon: BottleWine },
+  { title: 'Pedidos', url: '/orders', icon: HandPlatter },
+  { title: 'Maestros', url: '/masters', icon: Database },
   { title: 'Almacén', url: '/almacen', icon: Warehouse },
   { title: 'Proveedores', url: '/proveedores', icon: Truck },
   { title: 'Compras', url: '/compras', icon: ShoppingCart },
-  { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
-  { title: 'Bar', url: '/bar', icon: GlassWater },
-  { title: 'Table Map', url: '/table-map', icon: Map },
+  { title: 'Cocina', url: '/kitchen', icon: ChefHat },
+  { title: 'Barra', url: '/bar', icon: GlassWater },
+  { title: 'Mapa de mesas', url: '/table-map', icon: Map },
   { title: 'Fichaje', url: '/fichaje', icon: ClipboardCheck },
   { title: 'TPV', url: '/tpv', icon: BadgeEuro }
 ]
@@ -130,7 +130,7 @@ function AppSidebar(): JSX.Element {
               <LogOut />
             </div>
             <span className={'flex-1 px-3 font-medium transition-colors text-muted-foreground'}>
-              Logout
+              Cerrar sesión
             </span>
           </Link>
         </SidebarMenuButton>
