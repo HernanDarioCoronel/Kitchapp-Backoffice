@@ -1,4 +1,5 @@
 import { JSX, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ClipboardList } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { RestaurantTable, TableOccupation, TableOccupationStatusEnum } from '@api/api'
@@ -16,6 +17,7 @@ interface OccupiedDialogState {
 }
 
 function Orders(): JSX.Element {
+  const navigate = useNavigate()
   const [view, setView] = useState<OrdersView>('map')
   const [activeOccupationId, setActiveOccupationId] = useState<string | null>(null)
   const [occupiedDialog, setOccupiedDialog] = useState<OccupiedDialogState | null>(null)
@@ -69,6 +71,12 @@ function Orders(): JSX.Element {
     setView('orders-list')
   }
 
+  function handleCharge(): void {
+    if (!occupiedDialog) return
+    navigate(`/tpv?occupationId=${occupiedDialog.occupation.id as string}`)
+    setOccupiedDialog(null)
+  }
+
   function goToMap(): void {
     setView('map')
     setActiveOccupationId(null)
@@ -119,6 +127,7 @@ function Orders(): JSX.Element {
           onRelease={handleRelease}
           onNewOrder={handleNewOrder}
           onViewOrders={handleViewOrders}
+          onCharge={handleCharge}
           isReleasing={isClosing}
         />
       )}

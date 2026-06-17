@@ -1,5 +1,5 @@
 import { JSX } from 'react'
-import { ClipboardList, Plus, Unlock } from 'lucide-react'
+import { Banknote, ClipboardList, Plus, Unlock } from 'lucide-react'
 import { RestaurantTable, TableOccupation, TableOccupationStatusEnum } from '@api/api'
 import { Button } from '@renderer/components/ui/button'
 import {
@@ -18,6 +18,7 @@ interface OccupiedTableDialogProps {
   onRelease: () => void
   onNewOrder: () => void
   onViewOrders: () => void
+  onCharge: () => void
   isReleasing: boolean
 }
 
@@ -35,6 +36,7 @@ function OccupiedTableDialog({
   onRelease,
   onNewOrder,
   onViewOrders,
+  onCharge,
   isReleasing
 }: OccupiedTableDialogProps): JSX.Element {
   const statusLabel =
@@ -55,6 +57,10 @@ function OccupiedTableDialog({
           <Button onClick={onViewOrders} variant="outline" className="w-full">
             <ClipboardList size={16} className="mr-2" />
             Ver órdenes
+          </Button>
+          <Button onClick={onCharge} variant="outline" className="w-full">
+            <Banknote size={16} className="mr-2" />
+            Cobrar mesa
           </Button>
           <Button
             onClick={onRelease}

@@ -2,12 +2,17 @@ import {
   BadgeEuro,
   BottleWine,
   ChefHat,
+  ClipboardCheck,
   Database,
+  GlassWater,
   HandPlatter,
   LayoutDashboardIcon,
   LogOut,
   Map,
-  Utensils
+  ShoppingCart,
+  Truck,
+  Utensils,
+  Warehouse
 } from 'lucide-react'
 import { JSX, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
@@ -31,8 +36,13 @@ const navData = [
   { title: 'Products', url: '/products', icon: BottleWine },
   { title: 'Orders', url: '/orders', icon: HandPlatter },
   { title: 'Masters', url: '/masters', icon: Database },
+  { title: 'Almacén', url: '/almacen', icon: Warehouse },
+  { title: 'Proveedores', url: '/proveedores', icon: Truck },
+  { title: 'Compras', url: '/compras', icon: ShoppingCart },
   { title: 'Kitchen', url: '/kitchen', icon: ChefHat },
+  { title: 'Bar', url: '/bar', icon: GlassWater },
   { title: 'Table Map', url: '/table-map', icon: Map },
+  { title: 'Fichaje', url: '/fichaje', icon: ClipboardCheck },
   { title: 'TPV', url: '/tpv', icon: BadgeEuro }
 ]
 

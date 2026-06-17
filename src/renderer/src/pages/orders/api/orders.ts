@@ -1,6 +1,6 @@
 import apiClient from '@/lib/api-client'
 import { OrderDishStatusEnum, OrderStatusEnum, TableOccupationStatusEnum } from '@api/api'
-import type { Order, OrderDish, TableOccupation } from '@api/api'
+import type { Order, OrderConsumableItem, OrderDish, TableOccupation } from '@api/api'
 
 export interface CreateOrderDishPayload {
   dishId: string
@@ -65,6 +65,7 @@ export async function fetchOrders(): Promise<Order[]> {
 export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
   const { data } = await apiClient.post<Order>('/orders', {
     id: crypto.randomUUID(),
+    tip: 0,
     ...payload
   })
   return data
@@ -82,6 +83,22 @@ export async function updateOrderDish(
 ): Promise<OrderDish> {
   const { data } = await apiClient.patch<OrderDish>(
     `/orders/${orderId}/dishes/${dishId}`,
+    payload
+  )
+  return data
+}
+
+export interface UpdateOrderConsumablePayload {
+  delivered: boolean
+}
+
+export async function updateOrderConsumable(
+  orderId: string,
+  itemId: string,
+  payload: UpdateOrderConsumablePayload
+): Promise<OrderConsumableItem> {
+  const { data } = await apiClient.patch<OrderConsumableItem>(
+    `/orders/${orderId}/consumables/${itemId}`,
     payload
   )
   return data

@@ -4,14 +4,16 @@ import {
   createOrder,
   updateOrder,
   updateOrderDish,
+  updateOrderConsumable,
   createTableOccupation,
   closeTableOccupation,
   CreateOrderPayload,
   UpdateOrderPayload,
   UpdateOrderDishPayload,
+  UpdateOrderConsumablePayload,
   CreateTableOccupationPayload
 } from '../api/orders'
-import type { Order, OrderDish, TableOccupation } from '@api/api'
+import type { Order, OrderConsumableItem, OrderDish, TableOccupation } from '@api/api'
 
 export const orderKeys = {
   all: ['orders'] as const
@@ -95,6 +97,27 @@ export function useCloseTableOccupation(): {
       queryClient.invalidateQueries({ queryKey: ['table-occupations'] })
       queryClient.invalidateQueries({ queryKey: orderKeys.all })
     }
+  })
+  return { mutateAsync, isPending, isError }
+}
+
+export function useUpdateOrderConsumable(): {
+  mutateAsync: (args: {
+    orderId: string
+    itemId: string
+    payload: UpdateOrderConsumablePayload
+  }) => Promise<OrderConsumableItem>
+  isPending: boolean
+  isError: boolean
+} {
+  const queryClient = useQueryClient()
+  const { mutateAsync, isPending, isError } = useMutation<
+    OrderConsumableItem,
+    unknown,
+    { orderId: string; itemId: string; payload: UpdateOrderConsumablePayload }
+  >({
+    mutationFn: ({ orderId, itemId, payload }) => updateOrderConsumable(orderId, itemId, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: orderKeys.all })
   })
   return { mutateAsync, isPending, isError }
 }
