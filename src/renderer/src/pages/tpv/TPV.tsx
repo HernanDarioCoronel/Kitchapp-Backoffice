@@ -382,233 +382,237 @@ function TPV(): JSX.Element {
               </div>
 
               {/* Right: order detail + catalog + payment */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-hidden">
                 {!selectedOrder ? (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
                     <Receipt size={40} className="opacity-30" />
                     <p className="text-sm">Selecciona un pedido para cobrar</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4 max-w-xl mx-auto">
-                    {/* Order header */}
-                    <div className="flex items-center justify-between">
-                      <h2 className="font-semibold text-base">
-                        Mesa{' '}
-                        {(selectedOrder.tableOccupation as { table?: { tableNumber?: number } })
-                          ?.table?.tableNumber ?? '—'}
-                        {' — '}
-                        {selectedOrder.employee?.fullName ?? '—'}
-                      </h2>
-                      <button
-                        onClick={() => setSelectedOrderId(null)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <X size={16} />
-                      </button>
+                  <div className="flex h-full overflow-hidden">
+                    {/* Left: catalog (component 2) */}
+                    <div className="flex-1 overflow-y-auto p-4 border-r">
+                      <Card>
+                        <CardHeader className="pb-2 pt-3 px-4">
+                          <CardTitle className="text-sm font-medium">Añadir del catálogo</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4 pb-3">
+                          <Tabs defaultValue="platos">
+                            <TabsList className="mb-3">
+                              <TabsTrigger value="platos" className="text-xs gap-1">
+                                <Utensils size={12} /> Platos
+                              </TabsTrigger>
+                              <TabsTrigger value="consumibles" className="text-xs gap-1">
+                                <Package size={12} /> Consumibles
+                              </TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="platos" className="m-0">
+                              <div className="grid grid-cols-2 gap-2">
+                                {allDishes
+                                  .filter((d) => d.isAvailable)
+                                  .map((dish) => (
+                                    <CatalogItem
+                                      key={dish.id as string}
+                                      name={dish.name ?? ''}
+                                      subtitle={fmt(dish.price ?? 0)}
+                                      count={cartDishes.get(dish.id as string) ?? 0}
+                                      onIncrement={() => incrementDish(dish.id as string)}
+                                      onDecrement={() => decrementDish(dish.id as string)}
+                                    />
+                                  ))}
+                              </div>
+                            </TabsContent>
+                            <TabsContent value="consumibles" className="m-0">
+                              <div className="grid grid-cols-2 gap-2">
+                                {allProducts
+                                  .filter((p) => p.isActive)
+                                  .map((prod) => (
+                                    <CatalogItem
+                                      key={prod.id as string}
+                                      name={prod.name ?? ''}
+                                      subtitle={prod.category?.name ?? '—'}
+                                      count={cartProducts.get(prod.id as string) ?? 0}
+                                      onIncrement={() => incrementProduct(prod.id as string)}
+                                      onDecrement={() => decrementProduct(prod.id as string)}
+                                    />
+                                  ))}
+                              </div>
+                            </TabsContent>
+                          </Tabs>
+                        </CardContent>
+                      </Card>
                     </div>
 
-                    {/* Existing items */}
-                    <Card>
-                      <CardHeader className="pb-2 pt-3 px-4">
-                        <CardTitle className="text-sm font-medium flex items-center gap-1">
-                          <Utensils size={14} />
-                          Cuenta
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 pb-3 space-y-1">
-                        {Array.from(selectedOrder.orderDishes ?? []).map((od) => (
-                          <div
-                            key={od.id as string}
-                            className="flex justify-between text-sm py-0.5"
-                          >
-                            <span>
-                              {od.count}× {od.dish?.name ?? '—'}
-                            </span>
-                            <span className="font-medium">{fmt(od.total ?? 0)}</span>
-                          </div>
-                        ))}
-                        {Array.from(selectedOrder.orderConsumableItems ?? []).map((oc) => (
-                          <div
-                            key={oc.id as string}
-                            className="flex justify-between text-sm py-0.5"
-                          >
-                            <span>
-                              {oc.count}× {oc.product?.name ?? '—'}
-                            </span>
-                            <span className="text-muted-foreground text-xs">(consumible)</span>
-                          </div>
-                        ))}
-                        {(selectedOrder.tip ?? 0) > 0 && (
-                          <div className="flex justify-between text-sm py-0.5 text-muted-foreground">
-                            <span>Propina</span>
-                            <span>{fmt(selectedOrder.tip ?? 0)}</span>
-                          </div>
-                        )}
-                        {/* Cart additions */}
-                        {[...cartDishes.entries()].map(([id, count]) => {
-                          const dish = allDishes.find((d) => d.id === id)
-                          if (!dish) return null
-                          return (
-                            <div
-                              key={`add-d-${id}`}
-                              className="flex justify-between text-sm py-0.5 text-blue-600"
-                            >
-                              <span className="flex items-center gap-1">
-                                <Plus size={12} />
-                                {count}× {dish.name}
-                              </span>
-                              <span>{fmt((dish.price ?? 0) * count)}</span>
-                            </div>
-                          )
-                        })}
-                        {[...cartProducts.entries()].map(([id, count]) => {
-                          const prod = allProducts.find((p) => p.id === id)
-                          if (!prod) return null
-                          return (
-                            <div
-                              key={`add-p-${id}`}
-                              className="flex justify-between text-sm py-0.5 text-blue-600"
-                            >
-                              <span className="flex items-center gap-1">
-                                <Plus size={12} />
-                                {count}× {prod.name}
-                              </span>
-                              <span className="text-xs text-muted-foreground">(consumible)</span>
-                            </div>
-                          )
-                        })}
-                        <Separator className="my-2" />
-                        <div className="flex justify-between font-semibold">
-                          <span>Total</span>
-                          <span>{fmt(totalAmount)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Catalog to add items */}
-                    <Card>
-                      <CardHeader className="pb-2 pt-3 px-4">
-                        <CardTitle className="text-sm font-medium">Añadir del catálogo</CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 pb-3">
-                        <Tabs defaultValue="platos">
-                          <TabsList className="mb-3">
-                            <TabsTrigger value="platos" className="text-xs gap-1">
-                              <Utensils size={12} /> Platos
-                            </TabsTrigger>
-                            <TabsTrigger value="consumibles" className="text-xs gap-1">
-                              <Package size={12} /> Consumibles
-                            </TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="platos" className="m-0">
-                            <div className="grid grid-cols-2 gap-2">
-                              {allDishes
-                                .filter((d) => d.isAvailable)
-                                .map((dish) => (
-                                  <CatalogItem
-                                    key={dish.id as string}
-                                    name={dish.name ?? ''}
-                                    subtitle={fmt(dish.price ?? 0)}
-                                    count={cartDishes.get(dish.id as string) ?? 0}
-                                    onIncrement={() => incrementDish(dish.id as string)}
-                                    onDecrement={() => decrementDish(dish.id as string)}
-                                  />
-                                ))}
-                            </div>
-                          </TabsContent>
-                          <TabsContent value="consumibles" className="m-0">
-                            <div className="grid grid-cols-2 gap-2">
-                              {allProducts
-                                .filter((p) => p.isActive)
-                                .map((prod) => (
-                                  <CatalogItem
-                                    key={prod.id as string}
-                                    name={prod.name ?? ''}
-                                    subtitle={prod.category?.name ?? '—'}
-                                    count={cartProducts.get(prod.id as string) ?? 0}
-                                    onIncrement={() => incrementProduct(prod.id as string)}
-                                    onDecrement={() => decrementProduct(prod.id as string)}
-                                  />
-                                ))}
-                            </div>
-                          </TabsContent>
-                        </Tabs>
-                      </CardContent>
-                    </Card>
-
-                    {/* Payment form */}
-                    <Card>
-                      <CardHeader className="pb-2 pt-3 px-4">
-                        <CardTitle className="text-sm font-medium flex items-center gap-1">
-                          <CreditCard size={14} />
-                          Método de pago
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="px-4 pb-4 space-y-4">
-                        <div className="flex flex-wrap gap-2">
-                          {(
-                            [
-                              PaymentMethodEnum.Cash,
-                              PaymentMethodEnum.CreditCard,
-                              PaymentMethodEnum.DebitCard,
-                              PaymentMethodEnum.Online,
-                              PaymentMethodEnum.Transfer
-                            ] as PaymentMethodEnum[]
-                          ).map((m) => (
-                            <Button
-                              key={m}
-                              variant={method === m ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => {
-                                setMethod(m)
-                                setCashReceived('')
-                              }}
-                            >
-                              {m === PaymentMethodEnum.Cash && <Banknote size={14} className="mr-1" />}
-                              {(m === PaymentMethodEnum.CreditCard ||
-                                m === PaymentMethodEnum.DebitCard) && (
-                                <CreditCard size={14} className="mr-1" />
-                              )}
-                              {PAYMENT_METHOD_LABELS[m]}
-                            </Button>
-                          ))}
-                        </div>
-
-                        {method === PaymentMethodEnum.Cash && (
-                          <div className="space-y-2">
-                            <div className="space-y-1">
-                              <Label className="text-xs">Importe recibido (€)</Label>
-                              <Input
-                                type="number"
-                                min={totalAmount}
-                                step="0.01"
-                                placeholder={fmt(totalAmount)}
-                                value={cashReceived}
-                                onChange={(e) => setCashReceived(e.target.value)}
-                                className="w-40"
-                              />
-                            </div>
-                            {received > 0 && (
-                              <div
-                                className={`text-sm font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                              >
-                                Cambio: {fmt(change)}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <Button
-                          className="w-full"
-                          size="lg"
-                          disabled={!canCharge || paying || updatingOrder}
-                          onClick={handleCharge}
+                    {/* Right: order header + cuenta + payment (components 1 and 3) */}
+                    <div className="w-80 shrink-0 flex flex-col gap-4 overflow-y-auto p-4">
+                      {/* Order header */}
+                      <div className="flex items-center justify-between">
+                        <h2 className="font-semibold text-base">
+                          Mesa{' '}
+                          {(selectedOrder.tableOccupation as { table?: { tableNumber?: number } })
+                            ?.table?.tableNumber ?? '—'}
+                          {' — '}
+                          {selectedOrder.employee?.fullName ?? '—'}
+                        </h2>
+                        <button
+                          onClick={() => setSelectedOrderId(null)}
+                          className="text-muted-foreground hover:text-foreground"
                         >
-                          <CheckCircle size={16} className="mr-2" />
-                          {paying || updatingOrder ? 'Procesando...' : `Cobrar ${fmt(totalAmount)}`}
-                        </Button>
-                      </CardContent>
-                    </Card>
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      {/* Cuenta card (component 1) */}
+                      <Card>
+                        <CardHeader className="pb-2 pt-3 px-4">
+                          <CardTitle className="text-sm font-medium flex items-center gap-1">
+                            <Utensils size={14} />
+                            Cuenta
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4 pb-3 space-y-1">
+                          {Array.from(selectedOrder.orderDishes ?? []).map((od) => (
+                            <div
+                              key={od.id as string}
+                              className="flex justify-between text-sm py-0.5"
+                            >
+                              <span>
+                                {od.count}× {od.dish?.name ?? '—'}
+                              </span>
+                              <span className="font-medium">{fmt(od.total ?? 0)}</span>
+                            </div>
+                          ))}
+                          {Array.from(selectedOrder.orderConsumableItems ?? []).map((oc) => (
+                            <div
+                              key={oc.id as string}
+                              className="flex justify-between text-sm py-0.5"
+                            >
+                              <span>
+                                {oc.count}× {oc.product?.name ?? '—'}
+                              </span>
+                              <span className="text-muted-foreground text-xs">(consumible)</span>
+                            </div>
+                          ))}
+                          {(selectedOrder.tip ?? 0) > 0 && (
+                            <div className="flex justify-between text-sm py-0.5 text-muted-foreground">
+                              <span>Propina</span>
+                              <span>{fmt(selectedOrder.tip ?? 0)}</span>
+                            </div>
+                          )}
+                          {[...cartDishes.entries()].map(([id, count]) => {
+                            const dish = allDishes.find((d) => d.id === id)
+                            if (!dish) return null
+                            return (
+                              <div
+                                key={`add-d-${id}`}
+                                className="flex justify-between text-sm py-0.5 text-blue-600"
+                              >
+                                <span className="flex items-center gap-1">
+                                  <Plus size={12} />
+                                  {count}× {dish.name}
+                                </span>
+                                <span>{fmt((dish.price ?? 0) * count)}</span>
+                              </div>
+                            )
+                          })}
+                          {[...cartProducts.entries()].map(([id, count]) => {
+                            const prod = allProducts.find((p) => p.id === id)
+                            if (!prod) return null
+                            return (
+                              <div
+                                key={`add-p-${id}`}
+                                className="flex justify-between text-sm py-0.5 text-blue-600"
+                              >
+                                <span className="flex items-center gap-1">
+                                  <Plus size={12} />
+                                  {count}× {prod.name}
+                                </span>
+                                <span className="text-xs text-muted-foreground">(consumible)</span>
+                              </div>
+                            )
+                          })}
+                          <Separator className="my-2" />
+                          <div className="flex justify-between font-semibold">
+                            <span>Total</span>
+                            <span>{fmt(totalAmount)}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Payment form (component 3) */}
+                      <Card>
+                        <CardHeader className="pb-2 pt-3 px-4">
+                          <CardTitle className="text-sm font-medium flex items-center gap-1">
+                            <CreditCard size={14} />
+                            Método de pago
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-4 pb-4 space-y-4">
+                          <div className="flex flex-wrap gap-2">
+                            {(
+                              [
+                                PaymentMethodEnum.Cash,
+                                PaymentMethodEnum.CreditCard,
+                                PaymentMethodEnum.DebitCard,
+                                PaymentMethodEnum.Online,
+                                PaymentMethodEnum.Transfer
+                              ] as PaymentMethodEnum[]
+                            ).map((m) => (
+                              <Button
+                                key={m}
+                                variant={method === m ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                  setMethod(m)
+                                  setCashReceived('')
+                                }}
+                              >
+                                {m === PaymentMethodEnum.Cash && <Banknote size={14} className="mr-1" />}
+                                {(m === PaymentMethodEnum.CreditCard ||
+                                  m === PaymentMethodEnum.DebitCard) && (
+                                  <CreditCard size={14} className="mr-1" />
+                                )}
+                                {PAYMENT_METHOD_LABELS[m]}
+                              </Button>
+                            ))}
+                          </div>
+
+                          {method === PaymentMethodEnum.Cash && (
+                            <div className="space-y-2">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Importe recibido (€)</Label>
+                                <Input
+                                  type="number"
+                                  min={totalAmount}
+                                  step="0.01"
+                                  placeholder={fmt(totalAmount)}
+                                  value={cashReceived}
+                                  onChange={(e) => setCashReceived(e.target.value)}
+                                  className="w-40"
+                                />
+                              </div>
+                              {received > 0 && (
+                                <div
+                                  className={`text-sm font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                >
+                                  Cambio: {fmt(change)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <Button
+                            className="w-full"
+                            size="lg"
+                            disabled={!canCharge || paying || updatingOrder}
+                            onClick={handleCharge}
+                          >
+                            <CheckCircle size={16} className="mr-2" />
+                            {paying || updatingOrder ? 'Procesando...' : `Cobrar ${fmt(totalAmount)}`}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </div>
                 )}
               </div>
