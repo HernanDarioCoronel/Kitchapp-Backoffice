@@ -47,5 +47,5 @@ coverage/
 .tmp/
 .cache/
 
-# OpenAPI Generator output
-src/api/
+# OpenAPI Generator output (committed for Vercel build)
+# src/api/
