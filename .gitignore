@@ -3,7 +3,6 @@ node_modules/
 
 # Build outputs
 dist/
-dist-web/
 out/
 build/
 
@@ -48,15 +47,5 @@ coverage/
 .tmp/
 .cache/
 
-# OpenAPI Generator output
-src/api/
-
-# Portable build resources (binarios generados, no versionar)
-resources/backend/
-resources/jre/
-resources/jre-download.zip
-resources/_jre_tmp/
-
-# Electron packager temp files
-app-update.yml
-latest.yml
+# OpenAPI Generator output (committed for Vercel build)
+# src/api/
