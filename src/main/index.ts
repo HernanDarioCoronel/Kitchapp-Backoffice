@@ -1,8 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { spawn, ChildProcess } from 'child_process'
-import { existsSync } from 'fs'
-import * as net from 'net'
+import { existsSync, createWriteStream } from 'fs'
+import * as http from 'http'
+import * as os from 'os'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
@@ -22,6 +23,12 @@ function startBackend(): void {
   const jarPath = getJarPath()
   if (!existsSync(jarPath)) return
 
+  const logPath = join(os.homedir(), '.kitchapp', 'backend.log')
+  const logStream = createWriteStream(logPath, { flags: 'a' })
+  logStream.write(`\n--- backend start ${new Date().toISOString()} ---\n`)
+  logStream.write(`JAR: ${jarPath}\n`)
+  logStream.write(`JRE: ${getJavaPath()}\n`)
+
   const javaPath = getJavaPath()
   backendProcess = spawn(javaPath, [
     '-jar', jarPath,
@@ -29,8 +36,9 @@ function startBackend(): void {
     '--server.port=8080'
   ], { detached: false })
 
-  backendProcess.stdout?.on('data', (data) => process.stdout.write(`[backend] ${data}`))
-  backendProcess.stderr?.on('data', (data) => process.stderr.write(`[backend] ${data}`))
+  backendProcess.stdout?.on('data', (d) => logStream.write(d))
+  backendProcess.stderr?.on('data', (d) => logStream.write(d))
+  backendProcess.on('exit', (code) => logStream.write(`\n--- exit code ${code} ---\n`))
 }
 
 function stopBackend(): void {
@@ -42,28 +50,29 @@ function stopBackend(): void {
 
 function waitForBackend(port: number, timeoutMs: number): Promise<void> {
   const deadline = Date.now() + timeoutMs
+  const url = `http://127.0.0.1:${port}/api/auth/login`
   return new Promise((resolve, reject) => {
     function attempt(): void {
-      const socket = new net.Socket()
-      socket.setTimeout(1000)
-      socket.on('connect', () => { socket.destroy(); resolve() })
-      socket.on('error', () => {
-        socket.destroy()
-        if (Date.now() > deadline) reject(new Error('Backend did not start in time'))
-        else setTimeout(attempt, 500)
+      const req = http.request(url, { method: 'OPTIONS', timeout: 2000 }, (res) => {
+        res.resume()
+        resolve()
       })
-      socket.on('timeout', () => {
-        socket.destroy()
+      req.on('error', () => {
         if (Date.now() > deadline) reject(new Error('Backend did not start in time'))
-        else setTimeout(attempt, 500)
+        else setTimeout(attempt, 1000)
       })
-      socket.connect(port, '127.0.0.1')
+      req.on('timeout', () => {
+        req.destroy()
+        if (Date.now() > deadline) reject(new Error('Backend did not start in time'))
+        else setTimeout(attempt, 1000)
+      })
+      req.end()
     }
     attempt()
   })
 }
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -72,7 +81,8 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      webSecurity: false  // Needed for file:// → http://localhost:8080 requests (no server to set CORS)
     }
   })
 
@@ -90,6 +100,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 app.whenReady().then(async () => {
@@ -97,21 +109,34 @@ app.whenReady().then(async () => {
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
+    window.webContents.on('before-input-event', (_, input) => {
+      if (input.key === 'F12') window.webContents.openDevTools()
+    })
   })
 
   ipcMain.on('ping', () => console.log('pong'))
 
-  const jarExists = existsSync(getJarPath())
-  if (jarExists) {
-    startBackend()
-    try {
-      await waitForBackend(8080, 60000)
-    } catch {
-      console.error('Backend failed to start within 60 seconds')
+  const mainWindow = createWindow()
+
+  function sendBackendReady(ok: boolean): void {
+    if (mainWindow.webContents.isLoading()) {
+      mainWindow.webContents.once('did-finish-load', () =>
+        mainWindow.webContents.send('backend-ready', ok)
+      )
+    } else {
+      mainWindow.webContents.send('backend-ready', ok)
     }
   }
 
-  createWindow()
+  const jarExists = existsSync(getJarPath())
+  if (jarExists) {
+    startBackend()
+    waitForBackend(8080, 120000)
+      .then(() => sendBackendReady(true))
+      .catch(() => sendBackendReady(false))
+  } else {
+    sendBackendReady(true)
+  }
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

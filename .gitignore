@@ -3,6 +3,7 @@ node_modules/
 
 # Build outputs
 dist/
+dist-web/
 out/
 build/
 
@@ -49,3 +50,13 @@ coverage/
 
 # OpenAPI Generator output
 src/api/
+
+# Portable build resources (binarios generados, no versionar)
+resources/backend/
+resources/jre/
+resources/jre-download.zip
+resources/_jre_tmp/
+
+# Electron packager temp files
+app-update.yml
+latest.yml
