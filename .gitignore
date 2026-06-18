@@ -39,13 +39,14 @@ Thumbs.db
 # Coverage
 coverage/
 
-# OpenAPI generated files (si decides regenerarlos)
-# src/api/types.ts
-# src/api/models/
-
 # Temporary files
 .tmp/
 .cache/
 
-# OpenAPI Generator output (committed for Vercel build)
-# src/api/
+# OpenAPI Generator — solo se versiona el código TypeScript (api.ts, base.ts, etc.)
+src/api/docs/
+src/api/git_push.sh
+src/api/.openapi-generator/
+src/api/.openapi-generator-ignore
+src/api/.npmignore
+src/api/.gitignore
