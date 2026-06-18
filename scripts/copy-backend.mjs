@@ -97,7 +97,11 @@ const jreFolder = extracted.find((f) => f.startsWith('jdk-') || f.startsWith('jr
 if (!jreFolder) throw new Error(`Could not find extracted JRE folder in: ${extracted.join(', ')}`)
 
 if (existsSync(RESOURCES_JRE)) rmSync(RESOURCES_JRE, { recursive: true, force: true })
-renameSync(join(JRE_TMP, jreFolder), RESOURCES_JRE)
+
+// Use cpSync + rmSync instead of renameSync — Windows (Defender) locks freshly extracted
+// files briefly, making rename fail with EPERM.
+const { cpSync } = await import('fs')
+cpSync(join(JRE_TMP, jreFolder), RESOURCES_JRE, { recursive: true })
 rmSync(JRE_TMP, { recursive: true, force: true })
 rmSync(JRE_ZIP, { force: true })
 

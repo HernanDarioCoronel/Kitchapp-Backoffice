@@ -1,5 +1,6 @@
 appId: com.electron.app
 productName: kitchapp-backend
+icon: resources/icon.png
 directories:
   buildResources: build
 files:
@@ -22,9 +23,10 @@ asarUnpack:
   - resources/**
 win:
   executableName: kitchapp-backend
+  signAndEditExecutable: false
   target:
-    - name: nsis
-    - name: portable
+    - target: nsis
+    - target: portable
 portable:
   artifactName: ${name}-${version}-portable.${ext}
 nsis:
