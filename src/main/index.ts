@@ -1,10 +1,69 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
+import { spawn, ChildProcess } from 'child_process'
+import { existsSync } from 'fs'
+import * as net from 'net'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+let backendProcess: ChildProcess | null = null
+
+function getJavaPath(): string {
+  if (is.dev) return 'java'
+  const jreExe = process.platform === 'win32' ? 'java.exe' : 'java'
+  return join(process.resourcesPath, 'jre', 'bin', jreExe)
+}
+
+function getJarPath(): string {
+  return join(process.resourcesPath, 'backend', 'app.jar')
+}
+
+function startBackend(): void {
+  const jarPath = getJarPath()
+  if (!existsSync(jarPath)) return
+
+  const javaPath = getJavaPath()
+  backendProcess = spawn(javaPath, [
+    '-jar', jarPath,
+    '--spring.profiles.active=portable',
+    '--server.port=8080'
+  ], { detached: false })
+
+  backendProcess.stdout?.on('data', (data) => process.stdout.write(`[backend] ${data}`))
+  backendProcess.stderr?.on('data', (data) => process.stderr.write(`[backend] ${data}`))
+}
+
+function stopBackend(): void {
+  if (backendProcess) {
+    backendProcess.kill()
+    backendProcess = null
+  }
+}
+
+function waitForBackend(port: number, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  return new Promise((resolve, reject) => {
+    function attempt(): void {
+      const socket = new net.Socket()
+      socket.setTimeout(1000)
+      socket.on('connect', () => { socket.destroy(); resolve() })
+      socket.on('error', () => {
+        socket.destroy()
+        if (Date.now() > deadline) reject(new Error('Backend did not start in time'))
+        else setTimeout(attempt, 500)
+      })
+      socket.on('timeout', () => {
+        socket.destroy()
+        if (Date.now() > deadline) reject(new Error('Backend did not start in time'))
+        else setTimeout(attempt, 500)
+      })
+      socket.connect(port, '127.0.0.1')
+    }
+    attempt()
+  })
+}
+
 function createWindow(): void {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -26,8 +85,6 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -35,40 +92,39 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  // Set app user model id for windows
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
+  const jarExists = existsSync(getJarPath())
+  if (jarExists) {
+    startBackend()
+    try {
+      await waitForBackend(8080, 60000)
+    } catch {
+      console.error('Backend failed to start within 60 seconds')
+    }
+  }
 
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  stopBackend()
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+app.on('before-quit', () => {
+  stopBackend()
+})

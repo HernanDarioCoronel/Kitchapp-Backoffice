@@ -17,6 +17,9 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
+    "build:portable": "npm run build && electron-builder --win portable",
+    "build:full": "npm run copy-backend && npm run build:portable",
+    "copy-backend": "node scripts/copy-backend.mjs",
     "build:mac": "electron-vite --config ./vite.config.ts build && electron-builder --mac",
     "build:linux": "electron-vite --config ./vite.config.ts build && electron-builder --linux"
   },
