@@ -5,6 +5,9 @@ node_modules/
 dist/
 out/
 build/
+resources/backend/
+resources/jre/
+resources/jre-download.zip
 
 # Electron / Vite / frontend builds (si aplica)
 dist-electron/
