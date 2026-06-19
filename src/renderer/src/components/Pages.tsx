@@ -8,6 +8,7 @@ import Fichaje from '@renderer/pages/fichaje/Fichaje'
 import Kitchen from '@renderer/pages/kitchen/Kitchen'
 import Masters from '@renderer/pages/masters/Masters'
 import NotFound from '@renderer/pages/notFound'
+import Reservaciones from '@renderer/pages/reservaciones/Reservaciones'
 import Orders from '@renderer/pages/orders/Orders'
 import Products from '@renderer/pages/products/Products'
 import Proveedores from '@renderer/pages/proveedores/Proveedores'
@@ -29,7 +30,8 @@ const ROUTES: Record<string, string> = {
   '/bar': 'Bar',
   '/table-map': 'Table Map',
   '/fichaje': 'Fichaje',
-  '/tpv': 'TPV'
+  '/tpv': 'TPV',
+  '/reservaciones': 'Reservaciones'
 }
 
 function Pages(): JSX.Element {
@@ -56,6 +58,7 @@ function Pages(): JSX.Element {
       <Route path="/table-map" element={<TableMap />} />
       <Route path="/fichaje" element={<Fichaje />} />
       <Route path="/tpv" element={<TPV />} />
+      <Route path="/reservaciones" element={<Reservaciones />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

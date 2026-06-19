@@ -120,3 +120,16 @@ export async function updateUnitType(id: string, payload: UnitType): Promise<Uni
 export async function deleteUnitTypeById(id: string): Promise<void> {
   await apiClient.delete(`/unit-types/${id}`)
 }
+
+// Employees
+export async function createEmployee(payload: Employee): Promise<Employee> {
+  const { data } = await apiClient.post<Employee>('/employees', payload)
+  return data
+}
+export async function updateEmployee(id: string, payload: Employee): Promise<Employee> {
+  const { data } = await apiClient.patch<Employee>(`/employees/${id}`, payload)
+  return data
+}
+export async function deleteEmployeeById(id: string): Promise<void> {
+  await apiClient.delete(`/employees/${id}`)
+}

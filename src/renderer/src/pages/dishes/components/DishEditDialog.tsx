@@ -1,9 +1,9 @@
 import { JSX, useState } from 'react'
 import { useCreateDish, useUpdateDish } from '../hooks/useDishes'
-import { useProducts } from '../../products/hooks/useProducts'
+import { useCategories, useProducts } from '../../products/hooks/useProducts'
 import { ProductRequestType } from '../../products/api/products'
 import { uploadImage } from '@renderer/lib/images'
-import { Dish } from '@api/api'
+import { CategoryTypeEnum, Dish } from '@api/api'
 import { UUID } from 'crypto'
 import placeholderImg from '@resources/placeholder.jpg'
 import { Upload, Plus, X } from 'lucide-react'
@@ -72,6 +72,7 @@ function DishEditDialog({ open, onOpenChange, editing }: DishEditDialogProps): J
   const { mutate: createDish, isPending: isCreating } = useCreateDish()
   const { mutate: updateDish, isPending: isUpdating } = useUpdateDish()
   const { data: productsData } = useProducts(ProductRequestType.ALL)
+  const { data: categories } = useCategories()
 
   const [form, setForm] = useState<DishForm>(() =>
     editing
@@ -220,6 +221,27 @@ function DishEditDialog({ open, onOpenChange, editing }: DishEditDialogProps): J
           </div>
 
           <div className="grid gap-1">
+            <Label>Categoría</Label>
+            <Select
+              value={form.categoryId}
+              onValueChange={(v) => setForm((s) => ({ ...s, categoryId: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {(categories ?? [])
+                  .filter((c) => c.id && c.type === CategoryTypeEnum.Dish)
+                  .map((c) => (
+                    <SelectItem key={c.id} value={c.id!}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-1">
             <Label>Imagen</Label>
             <label className="relative flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden">
               {imagePreview ? (
@@ -344,7 +366,7 @@ function DishEditDialog({ open, onOpenChange, editing }: DishEditDialogProps): J
           </DialogClose>
           <Button
             onClick={() => void handleSubmit()}
-            disabled={isSubmitting || isCreating || isUpdating}
+            disabled={isSubmitting || isCreating || isUpdating || !form.name || !form.prepTime || !form.categoryId}
           >
             {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
           </Button>

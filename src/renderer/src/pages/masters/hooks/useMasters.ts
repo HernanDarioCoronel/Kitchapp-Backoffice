@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createAllergen,
   createCategory,
+  createEmployee,
   createLayer,
   createTable,
   createTax,
   createUnitType,
   deleteAllergenById,
   deleteCategoryById,
+  deleteEmployeeById,
   deleteLayerById,
   deleteTableById,
   deleteTaxById,
@@ -22,6 +24,7 @@ import {
   fetchUnitTypes,
   updateAllergen,
   updateCategory,
+  updateEmployee,
   updateLayer,
   updateTable,
   updateTax,
@@ -195,6 +198,37 @@ export const employeeKeys = { root: ['employees'] as const }
 
 export function useEmployees() {
   return useQuery<Employee[]>({ queryKey: employeeKeys.root, queryFn: fetchEmployees })
+}
+
+export function useCreateEmployee() {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError, isSuccess } = useMutation<Employee, unknown, Employee>({
+    mutationFn: createEmployee,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.root })
+  })
+  return { mutate, isLoading: isPending, isError, isSuccess }
+}
+
+export function useUpdateEmployee() {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError, isSuccess } = useMutation<
+    Employee,
+    unknown,
+    { id: string; payload: Employee }
+  >({
+    mutationFn: ({ id, payload }) => updateEmployee(id, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.root })
+  })
+  return { mutate, isLoading: isPending, isError, isSuccess }
+}
+
+export function useDeleteEmployee() {
+  const queryClient = useQueryClient()
+  const { mutate, isPending, isError, isSuccess } = useMutation<void, unknown, string>({
+    mutationFn: deleteEmployeeById,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: employeeKeys.root })
+  })
+  return { mutate, isLoading: isPending, isError, isSuccess }
 }
 
 // ─── Table Occupations ────────────────────────────────────────────────────────

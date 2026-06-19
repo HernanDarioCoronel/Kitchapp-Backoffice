@@ -1,6 +1,7 @@
 import {
   BadgeEuro,
   BottleWine,
+  CalendarDays,
   ChefHat,
   ClipboardCheck,
   Database,
@@ -36,6 +37,7 @@ const navData = [
   { title: 'Productos', url: '/products', icon: BottleWine },
   { title: 'Pedidos', url: '/orders', icon: HandPlatter },
   { title: 'Maestros', url: '/masters', icon: Database },
+  { title: 'Reservaciones', url: '/reservaciones', icon: CalendarDays },
   { title: 'Almacén', url: '/almacen', icon: Warehouse },
   { title: 'Proveedores', url: '/proveedores', icon: Truck },
   { title: 'Compras', url: '/compras', icon: ShoppingCart },

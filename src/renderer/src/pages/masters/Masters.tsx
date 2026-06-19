@@ -37,20 +37,24 @@ import {
   useCategoriesMasters,
   useCreateAllergen,
   useCreateCategory,
+  useCreateEmployee,
   useCreateTax,
   useCreateUnitType,
   useDeleteAllergen,
   useDeleteCategory,
+  useDeleteEmployee,
   useDeleteTax,
   useDeleteUnitType,
+  useEmployees,
   useTaxes,
   useUnitTypesMasters,
   useUpdateAllergen,
   useUpdateCategory,
+  useUpdateEmployee,
   useUpdateTax,
   useUpdateUnitType
 } from './hooks/useMasters'
-import { Allergen, Category, CategoryTypeEnum, Tax, UnitType } from '@api/api'
+import { Allergen, Category, CategoryTypeEnum, Employee, EmployeeRoleEnum, Tax, UnitType } from '@api/api'
 
 // ─── Allergens ───────────────────────────────────────────────────────────────
 
@@ -621,6 +625,169 @@ function UnitTypeSection(): JSX.Element {
   )
 }
 
+// ─── Employees ───────────────────────────────────────────────────────────────
+
+interface EmployeeForm {
+  fullName: string
+  role: EmployeeRoleEnum
+  isActive: boolean
+}
+
+const EMPTY_EMPLOYEE: EmployeeForm = {
+  fullName: '',
+  role: EmployeeRoleEnum.Waiter,
+  isActive: true
+}
+
+const EMPLOYEE_ROLE_LABELS: Record<EmployeeRoleEnum, string> = {
+  [EmployeeRoleEnum.Cook]: 'Cocinero',
+  [EmployeeRoleEnum.Waiter]: 'Camarero',
+  [EmployeeRoleEnum.Barman]: 'Barman',
+  [EmployeeRoleEnum.Admin]: 'Admin',
+  [EmployeeRoleEnum.Developer]: 'Desarrollador'
+}
+
+function EmployeeSection(): JSX.Element {
+  const { data } = useEmployees()
+  const { mutate: create } = useCreateEmployee()
+  const { mutate: update } = useUpdateEmployee()
+  const { mutate: remove } = useDeleteEmployee()
+  const { query } = useSearch()
+
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Employee | null>(null)
+  const [form, setForm] = useState<EmployeeForm>(EMPTY_EMPLOYEE)
+
+  const rows = useMemo(() => {
+    const base = data ?? []
+    if (!query.trim()) return base
+    const q = query.toLowerCase()
+    return base.filter((e) => (e.fullName ?? '').toLowerCase().includes(q))
+  }, [data, query])
+
+  function openCreate(): void {
+    setEditing(null)
+    setForm(EMPTY_EMPLOYEE)
+    setOpen(true)
+  }
+
+  function openEdit(item: Employee): void {
+    setEditing(item)
+    setForm({
+      fullName: item.fullName ?? '',
+      role: (item.role as EmployeeRoleEnum) ?? EmployeeRoleEnum.Waiter,
+      isActive: item.isActive ?? true
+    })
+    setOpen(true)
+  }
+
+  function handleSubmit(): void {
+    const payload: Employee = { fullName: form.fullName, role: form.role, isActive: form.isActive }
+    if (editing?.id) {
+      update({ id: editing.id, payload })
+    } else {
+      create(payload)
+    }
+    setOpen(false)
+  }
+
+  return (
+    <Section
+      title="Empleados"
+      onAdd={openCreate}
+      dialog={
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={openCreate} className="flex items-center gap-2">
+              <Plus /> Agregar
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editing ? 'Editar empleado' : 'Nuevo empleado'}</DialogTitle>
+              <DialogDescription>Datos del empleado</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-3 py-2">
+              <div className="grid gap-1">
+                <Label>Nombre completo</Label>
+                <Input
+                  value={form.fullName}
+                  onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
+                  placeholder="Nombre completo"
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label>Rol</Label>
+                <Select
+                  value={form.role}
+                  onValueChange={(v) => setForm((s) => ({ ...s, role: v as EmployeeRoleEnum }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(EmployeeRoleEnum).map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {EMPLOYEE_ROLE_LABELS[role]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="emp-active"
+                  checked={form.isActive}
+                  onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.checked }))}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="emp-active">Activo</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="ghost">Cancelar</Button>
+              </DialogClose>
+              <Button onClick={handleSubmit}>{editing ? 'Guardar' : 'Crear'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      }
+    >
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Rol</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((item) => (
+            <TableRow key={item.id} className="hover:bg-muted/50">
+              <TableCell>{item.fullName}</TableCell>
+              <TableCell>{item.role ? EMPLOYEE_ROLE_LABELS[item.role as EmployeeRoleEnum] : '-'}</TableCell>
+              <TableCell>
+                <Badge variant={item.isActive ? 'default' : 'secondary'}>
+                  {item.isActive ? 'Activo' : 'Inactivo'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <RowActions
+                  onEdit={() => openEdit(item)}
+                  onDelete={() => item.id && remove(item.id)}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Section>
+  )
+}
+
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
 function Section({
@@ -681,6 +848,7 @@ function Masters(): JSX.Element {
           <TabsTrigger value="categories">Categorías</TabsTrigger>
           <TabsTrigger value="taxes">Impuestos</TabsTrigger>
           <TabsTrigger value="unit-types">Unidades</TabsTrigger>
+          <TabsTrigger value="employees">Empleados</TabsTrigger>
         </TabsList>
         <TabsContent value="allergens">
           <AllergenSection />
@@ -693,6 +861,9 @@ function Masters(): JSX.Element {
         </TabsContent>
         <TabsContent value="unit-types">
           <UnitTypeSection />
+        </TabsContent>
+        <TabsContent value="employees">
+          <EmployeeSection />
         </TabsContent>
       </Tabs>
     </div>

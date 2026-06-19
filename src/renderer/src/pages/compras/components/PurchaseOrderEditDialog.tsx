@@ -402,7 +402,7 @@ function PurchaseOrderEditDialog({
           </DialogClose>
           <Button
             onClick={() => void handleSubmit()}
-            disabled={isSubmitting || isCreating || isUpdating}
+            disabled={isSubmitting || isCreating || isUpdating || !form.supplierId || !form.orderNumber || !form.dueDate}
           >
             {isSubmitting ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
           </Button>
